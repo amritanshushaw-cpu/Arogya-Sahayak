@@ -3,7 +3,8 @@ const { v4: uuidv4 } = require('uuid');
 const { sendAlertSMS } = require('../services/sms');
 
 module.exports = async function (fastify, opts) {
-  fastify.addHook('preValidation', fastify.authenticate);
+  // Commenting out global auth so patients can self-report vitals
+  // fastify.addHook('preValidation', fastify.authenticate);
 
   fastify.get('/', async (request, reply) => {
     try {
@@ -38,7 +39,7 @@ module.exports = async function (fastify, opts) {
       const id = uuidv4();
       const screening = {
         id,
-        worker_id: request.user.id,
+        worker_id: request.user?.id || null,
         ...request.body,
         symptoms: request.body.symptoms ? JSON.stringify(request.body.symptoms) : null,
       };

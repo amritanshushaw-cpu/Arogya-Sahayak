@@ -79,6 +79,7 @@ export default function PatientDashboard() {
     familyHistory: ''
   });
   const [infoSaved, setInfoSaved] = useState(false);
+  const [createdPatientId, setCreatedPatientId] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
 
   // Vitals State
@@ -184,6 +185,8 @@ export default function PatientDashboard() {
       });
 
       if (res.ok) {
+        const patientData = await res.json();
+        setCreatedPatientId(patientData.id);
         toast.success('Information saved successfully!');
         setInfoSaved(true);
         setStep('vitals');
@@ -260,6 +263,53 @@ export default function PatientDashboard() {
     setIsAnalyzing(true);
     setAnalysisResult(null);
     
+    // Calculate deterministic risk level for backend
+    let riskScore = 0;
+    let conditions = [];
+    let advice = [];
+    const lowerTranscript = transcript.toLowerCase();
+    
+    const glucose = Number(vitalsForm.blood_glucose);
+    const sys = Number(vitalsForm.bp_systolic);
+    const dia = Number(vitalsForm.bp_diastolic);
+    const temp = Number(vitalsForm.temperature);
+    
+    if (lowerTranscript.includes('sugar') || lowerTranscript.includes('diabetes') || glucose > 140) {
+      riskScore += 30;
+      conditions.push('Elevated Blood Sugar (Diabetes Risk)');
+      advice.push('Reduce sugar intake and schedule a fasting blood glucose test.');
+    }
+    if (lowerTranscript.includes('pressure') || lowerTranscript.includes('bp') || sys > 140 || dia > 90) {
+      riskScore += 30;
+      conditions.push('High Blood Pressure (Hypertension)');
+      advice.push('Reduce salt intake, monitor BP daily, and avoid stress.');
+    }
+    if (lowerTranscript.includes('fever') || lowerTranscript.includes('temperature') || temp > 99.5) {
+      riskScore += 20;
+      conditions.push('Fever / Possible Infection');
+      advice.push('Rest, stay hydrated, and monitor temperature.');
+    }
+    if (lowerTranscript.includes('chest') || lowerTranscript.includes('pain') || lowerTranscript.includes('breath')) {
+      riskScore += 40;
+      conditions.push('Cardiovascular Symptoms');
+      advice.push('URGENT: Seek immediate medical attention at the nearest PHC.');
+    }
+    
+    let level = 'LOW RISK';
+    let alertLevel = 'GREEN_ALERT';
+    let summary = 'Your vitals appear stable based on the provided parameters.';
+    if (riskScore >= 50) {
+      level = 'HIGH RISK (RED ALERT)';
+      alertLevel = 'RED_ALERT';
+      summary = 'Critical abnormalities detected. Immediate medical consultation is required.';
+    } else if (riskScore > 0) {
+      level = 'MODERATE RISK (YELLOW ALERT)';
+      alertLevel = 'YELLOW_ALERT';
+      summary = 'Some irregularities found. Please schedule a routine checkup soon.';
+    }
+    
+    let finalDiagnosisText = '';
+    
     try {
       const langName = LANGUAGES.find(l => l.code === language)?.name || 'English';
       const vitalsString = JSON.stringify(vitalsForm);
@@ -273,7 +323,8 @@ export default function PatientDashboard() {
 
       if (response.ok) {
         const data = await response.json();
-        setAnalysisResult(data.reply || data.response || data.answer || "Analysis complete.");
+        finalDiagnosisText = data.reply || data.response || data.answer || "Analysis complete.";
+        setAnalysisResult(finalDiagnosisText);
       }
       if (!response.ok) {
         const errData = await response.json().catch(() => null);
@@ -282,48 +333,6 @@ export default function PatientDashboard() {
     } catch (error) {
       console.error('Online LLM failed, using offline math model', error);
       
-      // Fallback Inbuilt Mathematical Model
-      let riskScore = 0;
-      let conditions = [];
-      let advice = [];
-      const lowerTranscript = transcript.toLowerCase();
-      
-      const glucose = Number(vitalsForm.blood_glucose);
-      const sys = Number(vitalsForm.bp_systolic);
-      const dia = Number(vitalsForm.bp_diastolic);
-      const temp = Number(vitalsForm.temperature);
-      
-      if (lowerTranscript.includes('sugar') || lowerTranscript.includes('diabetes') || glucose > 140) {
-        riskScore += 30;
-        conditions.push('Elevated Blood Sugar (Diabetes Risk)');
-        advice.push('Reduce sugar intake and schedule a fasting blood glucose test.');
-      }
-      if (lowerTranscript.includes('pressure') || lowerTranscript.includes('bp') || sys > 140 || dia > 90) {
-        riskScore += 30;
-        conditions.push('High Blood Pressure (Hypertension)');
-        advice.push('Reduce salt intake, monitor BP daily, and avoid stress.');
-      }
-      if (lowerTranscript.includes('fever') || lowerTranscript.includes('temperature') || temp > 99.5) {
-        riskScore += 20;
-        conditions.push('Fever / Possible Infection');
-        advice.push('Rest, stay hydrated, and monitor temperature.');
-      }
-      if (lowerTranscript.includes('chest') || lowerTranscript.includes('pain') || lowerTranscript.includes('breath')) {
-        riskScore += 40;
-        conditions.push('Cardiovascular Symptoms');
-        advice.push('URGENT: Seek immediate medical attention at the nearest PHC.');
-      }
-      
-      let level = 'LOW RISK';
-      let summary = 'Your vitals appear stable based on the provided parameters.';
-      if (riskScore >= 50) {
-        level = 'HIGH RISK (RED ALERT)';
-        summary = 'Critical parameters detected. Immediate medical consultation is highly recommended.';
-      } else if (riskScore >= 20) {
-        level = 'MODERATE RISK (YELLOW ALERT)';
-        summary = 'Some irregularities found. Please schedule a routine checkup soon.';
-      }
-
       const langName = LANGUAGES.find(l => l.code === language)?.name || 'English';
       
       const diagnosisText = `[Offline Diagnostic Model]
@@ -350,18 +359,54 @@ ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healt
           transData[0].forEach((t: any) => {
             translatedText += t[0];
           });
+          finalDiagnosisText = translatedText;
           setAnalysisResult(translatedText);
         } catch (transErr) {
           console.error("Translation API failed", transErr);
+          finalDiagnosisText = diagnosisText;
           setAnalysisResult(diagnosisText);
         }
       } else {
+        finalDiagnosisText = diagnosisText;
         setAnalysisResult(diagnosisText);
       }
-
-    } finally {
-      setIsAnalyzing(false);
     }
+    
+    // SAVE TO BACKEND PHC DATABASE
+    if (createdPatientId) {
+      try {
+        const screeningPayload = {
+          patient_id: createdPatientId,
+          bp_systolic: sys || 0,
+          bp_diastolic: dia || 0,
+          blood_glucose: glucose || 0,
+          temperature: temp || 0,
+          pulse: Number(vitalsForm.pulse) || 0,
+          spo2: Number(vitalsForm.spo2) || 0,
+          weight: Number(vitalsForm.weight) || 0,
+          height: Number(vitalsForm.height) || 0,
+          risk_level: alertLevel,
+          risk_explanation: JSON.stringify({ ai_summary: finalDiagnosisText }),
+          symptoms: transcript ? [transcript] : []
+        };
+        const headers: any = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        
+        await fetch(`${apiUrl}/api/screenings`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(screeningPayload)
+        });
+        
+        if (alertLevel !== 'GREEN_ALERT') {
+          toast.success('Alert routed to nearest PHC automatically.');
+        }
+      } catch (err) {
+        console.error('Failed to sync to PHC', err);
+      }
+    }
+    
+    setIsAnalyzing(false);
   };
 
   const handleVitalChange = (e: React.ChangeEvent<HTMLInputElement>) => {

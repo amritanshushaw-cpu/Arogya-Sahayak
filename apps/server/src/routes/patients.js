@@ -2,7 +2,8 @@ const db = require('../db/connection');
 const { v4: uuidv4 } = require('uuid');
 
 module.exports = async function (fastify, opts) {
-  fastify.addHook('preValidation', fastify.authenticate);
+  // Commenting out global auth so patients can self-register
+  // fastify.addHook('preValidation', fastify.authenticate);
 
   fastify.get('/', async (request, reply) => {
     try {
@@ -43,7 +44,7 @@ module.exports = async function (fastify, opts) {
       const patient = {
         id: uuidv4(),
         ...request.body,
-        registered_by: request.user.id,
+        registered_by: request.user?.id || null,
         family_history: request.body.family_history ? JSON.stringify(request.body.family_history) : null,
         lifestyle: request.body.lifestyle ? JSON.stringify(request.body.lifestyle) : null
       };
