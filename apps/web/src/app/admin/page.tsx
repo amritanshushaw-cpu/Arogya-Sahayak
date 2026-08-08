@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Users, UserPlus, Hospital, HeartPulse, Loader2, AlertCircle } from 'lucide-react';
+import { Users, UserPlus, Hospital, HeartPulse, Loader2, AlertCircle, Activity } from 'lucide-react';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://schemegg.onrender.com';
 
