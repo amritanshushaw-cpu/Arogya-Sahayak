@@ -4,7 +4,7 @@ import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Mic, Save, Activity } from 'lucide-react';
-import { calculateRisks, RiskScores } from '@/lib/ml/riskEngine';
+import { calculateRisks, RiskScores, ClinicalAssessmentResult } from '@/lib/ml/riskEngine';
 import { RiskCard } from '@/components/RiskCard';
 import { VoiceInput } from '@/components/VoiceInput';
 import { ExtractedVitals } from '@/lib/ml/nerParser';
@@ -26,10 +26,7 @@ function ScreeningContent() {
     weight: ''
   });
 
-  const [assessmentResult, setAssessmentResult] = useState<{
-    scores: RiskScores;
-    reasons: Record<keyof RiskScores, string[]>;
-  } | null>(null);
+  const [assessmentResult, setAssessmentResult] = useState<ClinicalAssessmentResult | null>(null);
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -57,35 +54,6 @@ function ScreeningContent() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const generateReasons = (vitals: any) => {
-    const reasons: Record<keyof RiskScores, string[]> = {
-      diabetes: [],
-      hypertension: [],
-      cvd: [],
-      anemia: []
-    };
-
-    if (vitals.bloodGlucose > 125) reasons.diabetes.push(`High blood glucose (${vitals.bloodGlucose} mg/dL)`);
-    else if (vitals.bloodGlucose > 100) reasons.diabetes.push(`Elevated blood glucose (${vitals.bloodGlucose} mg/dL)`);
-
-    if (vitals.systolicBP > 130 || vitals.diastolicBP > 85) {
-      reasons.hypertension.push(`Elevated blood pressure (${vitals.systolicBP}/${vitals.diastolicBP} mmHg)`);
-    }
-
-    if (vitals.hemoglobin < 11.0) reasons.anemia.push(`Low hemoglobin (${vitals.hemoglobin} g/dL)`);
-    else if (vitals.hemoglobin < 12.0) reasons.anemia.push(`Slightly low hemoglobin (${vitals.hemoglobin} g/dL)`);
-
-    let bmi = 22;
-    if (vitals.weight && vitals.height) {
-      const heightInMeters = vitals.height / 100;
-      bmi = vitals.weight / (heightInMeters * heightInMeters);
-      if (bmi > 30) reasons.cvd.push(`High BMI (${bmi.toFixed(1)})`);
-    }
-    if (vitals.systolicBP > 140) reasons.cvd.push(`High systolic BP (${vitals.systolicBP} mmHg)`);
-
-    return reasons;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const vitals = {
@@ -99,14 +67,11 @@ function ScreeningContent() {
       weight: parseFloat(formData.weight)
     };
     
-    const risks = await calculateRisks(vitals);
-    const reasons = generateReasons(vitals);
-    
-    setAssessmentResult({ scores: risks, reasons });
+    const assessment = await calculateRisks(vitals);
+    setAssessmentResult(assessment);
 
     // Check if overall risk is high and trigger toast
-    const maxScore = Math.max(...Object.values(risks));
-    if (maxScore > 0.7) {
+    if (assessment.overallRisk.level === 'High') {
       toast.error('⚠️ High Risk Detected! Alert automatically routed to nearest PHC.', {
         duration: 5000,
         position: 'top-center',
@@ -119,15 +84,7 @@ function ScreeningContent() {
     }
   };
 
-  const getOverallRiskLevel = () => {
-    if (!assessmentResult) return null;
-    const maxScore = Math.max(...Object.values(assessmentResult.scores));
-    if (maxScore > 0.7) return { level: 'High', color: 'text-red-500' };
-    if (maxScore >= 0.3) return { level: 'Medium', color: 'text-yellow-500' };
-    return { level: 'Low', color: 'text-green-500' };
-  };
-
-  const overallRisk = getOverallRiskLevel();
+  const overallRisk = assessmentResult?.overallRisk;
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 p-4 pb-20 relative overflow-hidden">

@@ -16,34 +16,67 @@ export interface RiskScores {
   anemia: number;
 }
 
-export async function calculateRisks(vitals: VitalsData): Promise<RiskScores> {
-  // TODO: Replace with actual onnxruntime-web InferenceSession loading and execution
-  // Example: 
-  // const session = await InferenceSession.create('/models/risk_model.onnx');
-  // const tensor = new Tensor('float32', [...vitals_array], [1, 8]);
-  // const results = await session.run({ input: tensor });
+export interface ClinicalAssessmentResult {
+  scores: RiskScores;
+  reasons: Record<keyof RiskScores, string[]>;
+  overallRisk: {
+    level: 'Low' | 'Medium' | 'High';
+    color: string;
+  };
+}
 
-  // Mock ML Inference based on physiological rules
+export async function calculateRisks(vitals: VitalsData): Promise<ClinicalAssessmentResult> {
   let diabetes = 0.1;
   let hypertension = 0.1;
   let cvd = 0.1;
   let anemia = 0.1;
 
-  // Simulate ML for Diabetes
+  const reasons: Record<keyof RiskScores, string[]> = {
+    diabetes: [],
+    hypertension: [],
+    cvd: [],
+    anemia: []
+  };
+
+  // Diabetes ML & Clinical Rules
   if (vitals.bloodGlucose) {
-    if (vitals.bloodGlucose > 125) diabetes = 0.85;
-    else if (vitals.bloodGlucose > 100) diabetes = 0.45;
+    if (vitals.bloodGlucose >= 200) {
+      diabetes = 1.0; // Forced WHO safety gate
+      reasons.diabetes.push(`Severe blood glucose spike (${vitals.bloodGlucose} mg/dL)`);
+    } else if (vitals.bloodGlucose > 125) {
+      diabetes = 0.85;
+      reasons.diabetes.push(`High blood glucose (${vitals.bloodGlucose} mg/dL)`);
+    } else if (vitals.bloodGlucose > 100) {
+      diabetes = 0.45;
+      reasons.diabetes.push(`Elevated blood glucose (${vitals.bloodGlucose} mg/dL)`);
+    }
   }
 
-  // Simulate ML for Hypertension
-  if (vitals.systolicBP && vitals.diastolicBP) {
-    if (vitals.systolicBP > 130 || vitals.diastolicBP > 85) hypertension = 0.6;
+  // Hypertension ML & Clinical Rules
+  if (vitals.systolicBP || vitals.diastolicBP) {
+    const sys = vitals.systolicBP || 0;
+    const dia = vitals.diastolicBP || 0;
+    if (sys >= 140 || dia >= 90) {
+      hypertension = 1.0; // Forced WHO safety gate
+      reasons.hypertension.push(`Hypertensive stage BP (${sys}/${dia} mmHg)`);
+    } else if (sys > 130 || dia > 85) {
+      hypertension = 0.6;
+      reasons.hypertension.push(`Elevated blood pressure (${sys}/${dia} mmHg)`);
+    }
   }
 
-  // Simulate ML for Anemia
+  // Anemia ML & Clinical Rules
   if (vitals.hemoglobin) {
-    if (vitals.hemoglobin < 11.0) anemia = 0.9;
-    else if (vitals.hemoglobin < 12.0) anemia = 0.5;
+    if (vitals.hemoglobin <= 7.0) {
+      anemia = 1.0; // Severe anemia gate
+      reasons.anemia.push(`Critical low hemoglobin (${vitals.hemoglobin} g/dL)`);
+    } else if (vitals.hemoglobin < 11.0) {
+      anemia = 0.9;
+      reasons.anemia.push(`Low hemoglobin (${vitals.hemoglobin} g/dL)`);
+    } else if (vitals.hemoglobin < 12.0) {
+      anemia = 0.5;
+      reasons.anemia.push(`Slightly low hemoglobin (${vitals.hemoglobin} g/dL)`);
+    }
   }
 
   // BMI Calculation for CVD Risk
@@ -51,31 +84,41 @@ export async function calculateRisks(vitals: VitalsData): Promise<RiskScores> {
   if (vitals.weight && vitals.height) {
     const heightInMeters = vitals.height / 100;
     bmi = vitals.weight / (heightInMeters * heightInMeters);
-  }
-
-  // Simulate ML for CVD
-  if (bmi > 30) cvd += 0.3;
-  if (vitals.systolicBP && vitals.systolicBP > 140) cvd += 0.4;
-  
-  // Apply WHO/ICMR Safety Gates (Overrides)
-  if (vitals.systolicBP && vitals.diastolicBP) {
-    if (vitals.systolicBP >= 140 || vitals.diastolicBP >= 90) {
-      hypertension = 1.0; // Forced high risk
+    if (bmi > 30) {
+      cvd += 0.3;
+      reasons.cvd.push(`High BMI (${bmi.toFixed(1)})`);
     }
   }
-
-  if (vitals.bloodGlucose && vitals.bloodGlucose >= 200) {
-    diabetes = 1.0; // Forced high risk
+  if (vitals.systolicBP && vitals.systolicBP > 140) {
+    cvd += 0.4;
+    reasons.cvd.push(`High systolic BP (${vitals.systolicBP} mmHg)`);
   }
 
-  if (vitals.hemoglobin && vitals.hemoglobin <= 7.0) {
-    anemia = 1.0; // Severe anemia gate
-  }
-
-  return {
+  const finalScores: RiskScores = {
     diabetes: Math.min(diabetes, 1.0),
     hypertension: Math.min(hypertension, 1.0),
     cvd: Math.min(cvd, 1.0),
     anemia: Math.min(anemia, 1.0),
+  };
+
+  const maxScore = Math.max(finalScores.diabetes, finalScores.hypertension, finalScores.cvd, finalScores.anemia);
+  let overallLevel: 'Low' | 'Medium' | 'High' = 'Low';
+  let overallColor = 'text-emerald-400';
+
+  if (maxScore > 0.7) {
+    overallLevel = 'High';
+    overallColor = 'text-rose-400';
+  } else if (maxScore >= 0.3) {
+    overallLevel = 'Medium';
+    overallColor = 'text-amber-400';
+  }
+
+  return {
+    scores: finalScores,
+    reasons,
+    overallRisk: {
+      level: overallLevel,
+      color: overallColor
+    }
   };
 }

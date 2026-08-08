@@ -19,3 +19,15 @@ export async function getAlertServerId(localId: string): Promise<string | null> 
   const alert = await db.alerts.get(localId);
   return alert?.serverId ?? null;
 }
+
+export async function setPatientServerId(localId: string, serverId: string): Promise<void> {
+  await db.patients.update(localId, { serverId, syncStatus: 'synced', lastSyncTimestamp: new Date() });
+}
+
+export async function setScreeningServerId(localId: string, serverId: string): Promise<void> {
+  await db.screenings.update(localId, { serverId, syncStatus: 'synced', lastSyncTimestamp: new Date() });
+}
+
+export async function setAlertServerId(localId: string, serverId: string): Promise<void> {
+  await db.alerts.update(localId, { serverId, syncStatus: 'synced', lastSyncTimestamp: new Date() });
+}
