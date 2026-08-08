@@ -61,7 +61,7 @@ If Twilio credentials are not configured, the OTP flow will fall back to a mock 
 
 ## 🌐 Demo links
 - Frontend: https://arogaya-sahayak.vercel.app
-- Backend health check: http://localhost:3001/health
+- Backend health check: https://schemegg.onrender.com/health
 
 ## 📝 Notes
 This repository is actively evolving and is intended for demo, prototyping, and field-use validation of rural health workflows.

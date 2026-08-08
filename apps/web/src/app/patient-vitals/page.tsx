@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, Globe, Activity, Send, Loader2, RefreshCw } from 'lucide-react';
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://schemegg.onrender.com';
 
 const LANGUAGES = [
   { code: 'en-US', name: 'English' },
