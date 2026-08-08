@@ -284,7 +284,26 @@ ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healt
 
 (Note: Online AI was unreachable. This is an inbuilt deterministic assessment. Translated for: ${langName})`;
 
-      setAnalysisResult(diagnosisText);
+      // Translate the offline diagnostic string if not English
+      const targetLang = language.split('-')[0];
+      if (targetLang !== 'en') {
+        try {
+          const transUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${targetLang}&dt=t&q=${encodeURIComponent(diagnosisText)}`;
+          const transRes = await fetch(transUrl);
+          const transData = await transRes.json();
+          let translatedText = '';
+          transData[0].forEach((t: any) => {
+            translatedText += t[0];
+          });
+          setAnalysisResult(translatedText);
+        } catch (transErr) {
+          console.error("Translation API failed", transErr);
+          setAnalysisResult(diagnosisText);
+        }
+      } else {
+        setAnalysisResult(diagnosisText);
+      }
+
     } finally {
       setIsAnalyzing(false);
     }
