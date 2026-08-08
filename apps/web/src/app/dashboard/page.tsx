@@ -1,20 +1,51 @@
-import React from 'react';
+"use client";
+
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { UserPlus, Activity, Users, Settings } from 'lucide-react';
+import { UserPlus, Activity, Users, Settings, Loader2 } from 'lucide-react';
+import { useAuthStore } from '@/lib/authStore';
+import toast from 'react-hot-toast';
 
 export default function Dashboard() {
-  const patients = [
-    { id: 1, name: 'Sita Devi', age: 45, village: 'Rampur', lastVisit: '2 days ago', risk: 'High' },
-    { id: 2, name: 'Ramesh Kumar', age: 52, village: 'Rampur', lastVisit: '1 week ago', risk: 'Medium' },
-    { id: 3, name: 'Geeta', age: 31, village: 'Shivpur', lastVisit: '1 month ago', risk: 'Low' },
-  ];
+  const { token, user } = useAuthStore();
+  const [patients, setPatients] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://schemegg.onrender.com';
+        const res = await fetch(`${apiUrl}/api/patients`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          setPatients(data.data || []);
+        } else {
+          toast.error('Failed to load patients');
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error('Network error loading patients');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (token) {
+      fetchPatients();
+    }
+  }, [token]);
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 p-4 pb-20">
       <header className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-primary">ASHA Portal</h1>
-          <p className="text-sm text-slate-400">Welcome / स्वागत है, Anjali</p>
+          <h1 className="text-2xl font-bold text-emerald-500">ASHA Portal</h1>
+          <p className="text-sm text-slate-400">Welcome / स्वागत है, {user?.name || 'Worker'}</p>
         </div>
         <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center border border-slate-700">
           <Settings size={20} className="text-slate-300" />
@@ -22,60 +53,50 @@ export default function Dashboard() {
       </header>
 
       <div className="grid grid-cols-2 gap-4 mb-8">
-        <Link href="/dashboard/register" className="glass-panel p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 border border-primary/20 active:bg-slate-800 transition-colors shadow-lg shadow-primary/5">
-          <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center text-primary mb-1">
+        <Link href="/patients/new" className="glass-card p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 border border-emerald-500/20 hover:bg-slate-800 transition-colors shadow-lg shadow-emerald-500/5">
+          <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400 mb-1">
             <UserPlus size={24} />
           </div>
-          <span className="font-semibold text-sm">Add Patient<br/><span className="text-xs text-slate-400 font-normal">नया मरीज</span></span>
+          <span className="font-semibold text-sm">New Patient<br/><span className="text-xs text-slate-400 font-normal">नया मरीज</span></span>
         </Link>
-        <Link href="/screening" className="glass-panel p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 border border-success/20 active:bg-slate-800 transition-colors shadow-lg shadow-success/5">
-          <div className="w-12 h-12 bg-success/20 rounded-full flex items-center justify-center text-success mb-1">
+        <Link href="/dashboard/phc" className="glass-card p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 border border-purple-500/20 hover:bg-slate-800 transition-colors shadow-lg shadow-purple-500/5">
+          <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center text-purple-400 mb-1">
             <Activity size={24} />
           </div>
-          <span className="font-semibold text-sm">Screening<br/><span className="text-xs text-slate-400 font-normal">जांच</span></span>
-        </Link>
-      </div>
-
-      <div className="mb-8 flex flex-col gap-4">
-        <Link href="/dashboard/phc" className="glass-panel w-full p-4 rounded-xl flex items-center justify-center text-center gap-2 border border-purple-500/30 active:bg-slate-800 transition-colors shadow-lg shadow-purple-500/10">
-          <div className="flex flex-col items-center">
-            <span className="font-semibold text-lg text-purple-400">PHC District Dashboard</span>
-            <span className="text-xs text-slate-400">View analytics and disease trends</span>
-          </div>
-        </Link>
-        <Link href="/teleconsult" className="glass-panel w-full p-4 rounded-xl flex items-center justify-center text-center gap-2 border border-blue-500/30 active:bg-slate-800 transition-colors shadow-lg shadow-blue-500/10">
-          <div className="flex flex-col items-center">
-            <span className="font-semibold text-lg text-blue-400">Teleconsultation</span>
-            <span className="text-xs text-slate-400">Connect with a doctor <span className="font-normal">(टेलीकंसल्टेशन)</span></span>
-          </div>
+          <span className="font-semibold text-sm">Analytics<br/><span className="text-xs text-slate-400 font-normal">विश्लेषण</span></span>
         </Link>
       </div>
 
       <div className="mb-4 flex justify-between items-end">
         <h2 className="text-xl font-bold flex items-center gap-2">
-          <Users size={20} className="text-primary" />
-          Recent Patients <span className="text-sm text-slate-400 font-normal ml-2">हाल के मरीज</span>
+          <Users size={20} className="text-emerald-500" />
+          Registered Patients <span className="text-sm text-slate-400 font-normal ml-2">पंजीकृत मरीज</span>
         </h2>
       </div>
 
       <div className="space-y-3">
-        {patients.map(patient => (
-          <div key={patient.id} className="glass-panel p-4 rounded-xl border border-slate-800 flex justify-between items-center">
-            <div>
-              <h3 className="font-semibold text-lg">{patient.name}</h3>
-              <p className="text-sm text-slate-400">{patient.age} yrs • {patient.village}</p>
-            </div>
-            <div className="text-right">
-              <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-1
-                ${patient.risk === 'High' ? 'bg-danger/20 text-danger border border-danger/30' : 
-                  patient.risk === 'Medium' ? 'bg-warning/20 text-warning border border-warning/30' : 
-                  'bg-success/20 text-success border border-success/30'}`}>
-                {patient.risk} Risk
-              </span>
-              <p className="text-xs text-slate-500">{patient.lastVisit}</p>
-            </div>
+        {loading ? (
+          <div className="flex justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-emerald-500" /></div>
+        ) : patients.length === 0 ? (
+          <div className="text-center p-8 text-slate-500 border border-dashed border-slate-700 rounded-xl">
+            No patients registered yet. Click "New Patient" to add one.
           </div>
-        ))}
+        ) : (
+          patients.map(patient => (
+            <Link href={`/patients/${patient.id}`} key={patient.id} className="glass-card p-4 rounded-xl border border-slate-800 flex justify-between items-center hover:border-emerald-500/50 transition-colors block">
+              <div>
+                <h3 className="font-semibold text-lg text-white">{patient.name}</h3>
+                <p className="text-sm text-slate-400">{patient.age} yrs • {patient.gender}</p>
+                <p className="text-xs text-slate-500 mt-1 truncate max-w-[200px]">{patient.location || patient.village}</p>
+              </div>
+              <div className="text-right flex flex-col items-end">
+                <span className="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700">
+                  View Profile
+                </span>
+              </div>
+            </Link>
+          ))
+        )}
       </div>
     </div>
   );
