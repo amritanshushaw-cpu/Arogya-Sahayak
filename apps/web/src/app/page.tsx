@@ -14,6 +14,7 @@ import {
   HeartPulse,
   Users,
   BrainCircuit,
+  Hospital,
 } from 'lucide-react';
 
 type Language = 'en' | 'hi';
