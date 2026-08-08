@@ -19,6 +19,7 @@ fastify.decorate('authenticate', async function (request, reply) {
 
 // Register routes under /api prefix
 fastify.register(async function (api) {
+  api.register(require('./routes/admin'), { prefix: '/admin' });
   api.register(require('./routes/auth'), { prefix: '/auth' });
   api.register(require('./routes/patients'), { prefix: '/patients' });
   api.register(require('./routes/screenings'), { prefix: '/screenings' });
