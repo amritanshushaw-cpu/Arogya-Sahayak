@@ -230,26 +230,61 @@ export default function PatientDashboard() {
       // Fallback Inbuilt Mathematical Model
       let riskScore = 0;
       let conditions = [];
+      let advice = [];
       const lowerTranscript = transcript.toLowerCase();
       
-      if (lowerTranscript.includes('sugar') || lowerTranscript.includes('diabetes') || Number(vitalsForm.blood_glucose) > 140) {
+      const glucose = Number(vitalsForm.blood_glucose);
+      const sys = Number(vitalsForm.bp_systolic);
+      const dia = Number(vitalsForm.bp_diastolic);
+      const temp = Number(vitalsForm.temperature);
+      
+      if (lowerTranscript.includes('sugar') || lowerTranscript.includes('diabetes') || glucose > 140) {
         riskScore += 30;
-        conditions.push('Diabetes Risk');
+        conditions.push('Elevated Blood Sugar (Diabetes Risk)');
+        advice.push('Reduce sugar intake and schedule a fasting blood glucose test.');
       }
-      if (lowerTranscript.includes('pressure') || lowerTranscript.includes('bp') || Number(vitalsForm.bp_systolic) > 140) {
+      if (lowerTranscript.includes('pressure') || lowerTranscript.includes('bp') || sys > 140 || dia > 90) {
         riskScore += 30;
-        conditions.push('Hypertension Risk');
+        conditions.push('High Blood Pressure (Hypertension)');
+        advice.push('Reduce salt intake, monitor BP daily, and avoid stress.');
       }
-      if (lowerTranscript.includes('fever') || lowerTranscript.includes('temperature') || Number(vitalsForm.temperature) > 99.5) {
+      if (lowerTranscript.includes('fever') || lowerTranscript.includes('temperature') || temp > 99.5) {
         riskScore += 20;
-        conditions.push('Fever / Infection');
+        conditions.push('Fever / Possible Infection');
+        advice.push('Rest, stay hydrated, and monitor temperature.');
+      }
+      if (lowerTranscript.includes('chest') || lowerTranscript.includes('pain') || lowerTranscript.includes('breath')) {
+        riskScore += 40;
+        conditions.push('Cardiovascular Symptoms');
+        advice.push('URGENT: Seek immediate medical attention at the nearest PHC.');
       }
       
-      let level = 'LOW';
-      if (riskScore > 50) level = 'HIGH';
-      else if (riskScore > 20) level = 'MODERATE';
+      let level = 'LOW RISK';
+      let summary = 'Your vitals appear stable based on the provided parameters.';
+      if (riskScore >= 50) {
+        level = 'HIGH RISK (RED ALERT)';
+        summary = 'Critical parameters detected. Immediate medical consultation is highly recommended.';
+      } else if (riskScore >= 20) {
+        level = 'MODERATE RISK (YELLOW ALERT)';
+        summary = 'Some irregularities found. Please schedule a routine checkup soon.';
+      }
 
-      setAnalysisResult(`[OFFLINE MODE]\n\nBased on basic parameters and vitals:\nRisk Level: ${level}\nPotential flags: ${conditions.join(', ') || 'None detected'}\n\nPlease consult a doctor for accurate diagnosis.`);
+      const langName = LANGUAGES.find(l => l.code === language)?.name || 'English';
+      
+      const diagnosisText = `[Offline Diagnostic Model]
+
+Risk Assessment: ${level}
+Summary: ${summary}
+
+Detected Flags:
+${conditions.length > 0 ? conditions.map(c => '- ' + c).join('\n') : '- No major flags detected in basic parameters.'}
+
+Recommended Action:
+${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healthy diet and regular exercise.'}
+
+(Note: Online AI was unreachable. This is an inbuilt deterministic assessment. Translated for: ${langName})`;
+
+      setAnalysisResult(diagnosisText);
     } finally {
       setIsAnalyzing(false);
     }
