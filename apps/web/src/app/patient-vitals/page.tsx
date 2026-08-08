@@ -221,8 +221,10 @@ export default function PatientDashboard() {
       if (response.ok) {
         const data = await response.json();
         setAnalysisResult(data.reply || data.response || data.answer || "Analysis complete.");
-      } else {
-        throw new Error('LLM Failed');
+      }
+      if (!response.ok) {
+        const errData = await response.json().catch(() => null);
+        throw new Error(errData?.error || 'Network error or AI unavailable');
       }
     } catch (error) {
       console.error('Online LLM failed, using offline math model', error);
@@ -282,7 +284,7 @@ ${conditions.length > 0 ? conditions.map(c => '- ' + c).join('\n') : '- No major
 Recommended Action:
 ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healthy diet and regular exercise.'}
 
-(Note: Online AI was unreachable. This is an inbuilt deterministic assessment. Translated for: ${langName})`;
+(Note: Online AI failed: ${error instanceof Error ? error.message : 'Unreachable'}. This is an inbuilt deterministic assessment. Translated for: ${langName})`;
 
       // Translate the offline diagnostic string if not English
       const targetLang = language.split('-')[0];
