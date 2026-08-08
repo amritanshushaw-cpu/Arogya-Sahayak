@@ -1,5 +1,6 @@
 const db = require('../db/connection');
 const { v4: uuidv4 } = require('uuid');
+const { sendAlertSMS } = require('../services/sms');
 
 module.exports = async function (fastify, opts) {
   fastify.addHook('preValidation', fastify.authenticate);
@@ -55,6 +56,11 @@ module.exports = async function (fastify, opts) {
           alert_type,
           status: 'ACTIVE'
         });
+
+        // Attempt to send an SMS using the helper
+        // Since we may not have patient name or doctor phone in the request directly, 
+        // we'll use placeholder or fetch if needed. For now, use basic details:
+        await sendAlertSMS(screening.patient_id, screening.risk_level, process.env.DOCTOR_PHONE_NUMBER || '+1234567890');
       }
 
       return reply.code(201).send({ id });

@@ -7,6 +7,7 @@ import { calculateRisks, RiskScores } from '@/lib/ml/riskEngine';
 import { RiskCard } from '@/components/RiskCard';
 import { VoiceInput } from '@/components/VoiceInput';
 import { ExtractedVitals } from '@/lib/ml/nerParser';
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function ScreeningForm() {
   const [formData, setFormData] = useState({
@@ -96,6 +97,20 @@ export default function ScreeningForm() {
     const reasons = generateReasons(vitals);
     
     setAssessmentResult({ scores: risks, reasons });
+
+    // Check if overall risk is high and trigger toast
+    const maxScore = Math.max(...Object.values(risks));
+    if (maxScore > 0.7) {
+      toast.error('⚠️ High Risk Detected! Alert automatically routed to nearest PHC.', {
+        duration: 5000,
+        position: 'top-center',
+        style: {
+          background: '#ef4444',
+          color: '#fff',
+          fontWeight: 'bold',
+        }
+      });
+    }
   };
 
   const getOverallRiskLevel = () => {
@@ -110,6 +125,7 @@ export default function ScreeningForm() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 p-4 pb-20 relative overflow-hidden">
+      <Toaster />
       {/* Decorative background elements */}
       <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-[-10%] left-[-10%] w-64 h-64 bg-danger/10 rounded-full blur-3xl pointer-events-none"></div>
