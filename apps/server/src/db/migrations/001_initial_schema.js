@@ -40,19 +40,19 @@ exports.up = async function(knex) {
     table.text('device_id');
     table.integer('bp_systolic');
     table.integer('bp_diastolic');
-    table.real('blood_glucose');
-    table.real('hb_level');
-    table.real('bmi');
-    table.real('weight');
-    table.real('height');
-    table.real('temperature');
+    table.float('blood_glucose');
+    table.float('hb_level');
+    table.float('bmi');
+    table.float('weight');
+    table.float('height');
+    table.float('temperature');
     table.integer('pulse');
     table.integer('spo2');
     table.text('symptoms'); // JSON array string
-    table.real('risk_diabetes');
-    table.real('risk_hypertension');
-    table.real('risk_cvd');
-    table.real('risk_anemia');
+    table.float('risk_diabetes');
+    table.float('risk_hypertension');
+    table.float('risk_cvd');
+    table.float('risk_anemia');
     table.text('risk_level'); // GREEN/YELLOW/RED
     table.text('risk_explanation'); // JSON string
     table.text('input_method').defaultTo('manual');
@@ -60,6 +60,7 @@ exports.up = async function(knex) {
     table.timestamp('synced_at').nullable();
     table.timestamp('created_at').defaultTo(knex.fn.now());
   });
+
 
   await knex.schema.createTable('alerts', table => {
     table.text('id').primary();
