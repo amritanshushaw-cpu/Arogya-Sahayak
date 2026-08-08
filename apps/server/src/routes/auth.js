@@ -5,20 +5,25 @@ const { v4: uuidv4 } = require('uuid');
 module.exports = async function (fastify, opts) {
   fastify.post('/register', async (request, reply) => {
     try {
-      const { name, phone, password, role, district, state, language } = request.body;
-      
-      const existingUser = await db('users').where({ phone }).first();
+      const { name, phone, email, password, role, district, state, language } = request.body;
+      const normalizedPhone = phone || email;
+
+      if (!name || !normalizedPhone || !password) {
+        return reply.code(400).send({ error: 'Name, phone/email, and password are required' });
+      }
+
+      const existingUser = await db('users').where({ phone: normalizedPhone }).first();
       if (existingUser) {
         return reply.code(400).send({ error: 'Phone number already registered' });
       }
 
       const password_hash = await bcrypt.hash(password, 10);
       const id = uuidv4();
-      
+
       await db('users').insert({
         id,
         name,
-        phone,
+        phone: normalizedPhone,
         password_hash,
         role: role || 'asha',
         district,
@@ -26,8 +31,8 @@ module.exports = async function (fastify, opts) {
         language
       });
 
-      const token = fastify.jwt.sign({ id, role, phone, district });
-      return reply.code(201).send({ token, user: { id, name, phone, role, district } });
+      const token = fastify.jwt.sign({ id, role: role || 'asha', phone: normalizedPhone, district });
+      return reply.code(201).send({ token, user: { id, name, phone: normalizedPhone, role: role || 'asha', district } });
     } catch (error) {
       request.log.error(error);
       return reply.code(500).send({ error: 'Internal Server Error' });
@@ -36,9 +41,14 @@ module.exports = async function (fastify, opts) {
 
   fastify.post('/login', async (request, reply) => {
     try {
-      const { phone, password } = request.body;
-      
-      const user = await db('users').where({ phone }).first();
+      const { phone, email, password } = request.body;
+      const normalizedPhone = phone || email;
+
+      if (!normalizedPhone || !password) {
+        return reply.code(400).send({ error: 'Phone/email and password are required' });
+      }
+
+      const user = await db('users').where({ phone: normalizedPhone }).first();
       if (!user) {
         return reply.code(401).send({ error: 'Invalid phone or password' });
       }
