@@ -17,6 +17,8 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   
   const setAuth = useAuthStore((state) => state.setAuth);
+  const language = useAuthStore((state) => state.language);
+  const setLanguage = useAuthStore((state) => state.setLanguage);
 
   useEffect(() => {
     const urlRole = searchParams.get('role');
@@ -71,6 +73,21 @@ function LoginForm() {
     }
   };
 
+  const LANGUAGES = [
+    { code: 'en-US', name: 'English' },
+    { code: 'hi-IN', name: 'Hindi (हिंदी)' },
+    { code: 'bn-IN', name: 'Bengali (বাংলা)' },
+    { code: 'te-IN', name: 'Telugu (తెలుగు)' },
+    { code: 'mr-IN', name: 'Marathi (मराठी)' },
+    { code: 'ta-IN', name: 'Tamil (தமிழ்)' },
+    { code: 'gu-IN', name: 'Gujarati (ગુજરાતી)' },
+    { code: 'ur-IN', name: 'Urdu (اردو)' },
+    { code: 'kn-IN', name: 'Kannada (ಕನ್ನಡ)' },
+    { code: 'or-IN', name: 'Odia (ଓଡ଼ିଆ)' },
+    { code: 'ml-IN', name: 'Malayalam (മലയാളം)' },
+    { code: 'pa-IN', name: 'Punjabi (ਪੰਜਾਬੀ)' },
+  ];
+
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md p-8 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl">
@@ -83,6 +100,19 @@ function LoginForm() {
         <p className="text-gray-400 text-center mb-8 text-sm">Sign in to Arogya Sahayak</p>
 
         <form onSubmit={handleLogin} className="space-y-4">
+          <div className="mb-6 flex flex-col">
+            <label className="text-sm font-medium text-gray-300 mb-2">Language Preference</label>
+            <select
+              value={language || 'en-US'}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="w-full bg-black/50 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-transparent transition-all"
+            >
+              {LANGUAGES.map(l => (
+                <option key={l.code} value={l.code}>{l.name}</option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Role</label>
             <select

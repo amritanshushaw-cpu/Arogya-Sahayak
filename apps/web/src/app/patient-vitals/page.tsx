@@ -23,7 +23,7 @@ const LANGUAGES = [
 ];
 
 export default function PatientDashboard() {
-  const { token, user } = useAuthStore();
+  const { token, user, language, setLanguage } = useAuthStore();
   const [step, setStep] = useState<'info' | 'vitals' | 'detection'>('info');
 
   // Info State
@@ -47,7 +47,6 @@ export default function PatientDashboard() {
     weight: '',
     height: ''
   });
-  const [selectedLang, setSelectedLang] = useState('en-US');
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [isAutofilling, setIsAutofilling] = useState(false);
@@ -153,7 +152,7 @@ export default function PatientDashboard() {
       recognitionRef.current.stop();
       setIsRecording(false);
     } else {
-      recognitionRef.current.lang = selectedLang;
+      recognitionRef.current.lang = language;
       recognitionRef.current.start();
       setIsRecording(true);
     }
@@ -209,7 +208,7 @@ export default function PatientDashboard() {
     setAnalysisResult(null);
     
     try {
-      const langName = LANGUAGES.find(l => l.code === selectedLang)?.name || 'English';
+      const langName = LANGUAGES.find(l => l.code === language)?.name || 'English';
       const vitalsString = JSON.stringify(vitalsForm);
       const prompt = `Act as a medical risk analyzer. Patient Age: ${infoForm.age}, Gender: ${infoForm.gender}, Family History: ${infoForm.familyHistory}. Patient Vitals entered: ${vitalsString}. Patient Symptoms Audio Transcript: "${transcript}". Provide a detailed disease detection analysis and risk assessment. YOU MUST OUTPUT ENTIRELY IN THIS LANGUAGE: ${langName}.`;
 
@@ -267,11 +266,11 @@ export default function PatientDashboard() {
       window.speechSynthesis.cancel();
       
       const utterance = new SpeechSynthesisUtterance(analysisResult);
-      utterance.lang = selectedLang;
+      utterance.lang = language;
       
       // Try to find a voice that matches the selected language
       const voices = window.speechSynthesis.getVoices();
-      const matchVoice = voices.find(v => v.lang.startsWith(selectedLang.split('-')[0]));
+      const matchVoice = voices.find(v => v.lang.startsWith(language.split('-')[0]));
       if (matchVoice) {
         utterance.voice = matchVoice;
       }
@@ -410,8 +409,8 @@ export default function PatientDashboard() {
                     <Globe className="w-4 h-4" /> Audio Language
                   </label>
                   <select 
-                    value={selectedLang}
-                    onChange={(e) => setSelectedLang(e.target.value)}
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value)}
                     className="w-full bg-slate-900 border border-white/10 rounded-xl p-2 text-sm text-white focus:ring-2 focus:ring-blue-500"
                   >
                     {LANGUAGES.map(lang => (

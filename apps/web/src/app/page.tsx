@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
+import { useAuthStore } from '@/lib/authStore';
 import {
   Stethoscope,
   Mic,
@@ -15,9 +16,23 @@ import {
   Users,
   BrainCircuit,
   Hospital,
+  Globe,
 } from 'lucide-react';
 
-type Language = 'en' | 'hi';
+const LANGUAGES = [
+  { code: 'en-US', name: 'English' },
+  { code: 'hi-IN', name: 'Hindi (हिंदी)' },
+  { code: 'bn-IN', name: 'Bengali (বাংলা)' },
+  { code: 'te-IN', name: 'Telugu (తెలుగు)' },
+  { code: 'mr-IN', name: 'Marathi (मराठी)' },
+  { code: 'ta-IN', name: 'Tamil (தமிழ்)' },
+  { code: 'gu-IN', name: 'Gujarati (ગુજરાતી)' },
+  { code: 'ur-IN', name: 'Urdu (اردو)' },
+  { code: 'kn-IN', name: 'Kannada (ಕನ್ನಡ)' },
+  { code: 'or-IN', name: 'Odia (ଓଡ଼ିଆ)' },
+  { code: 'ml-IN', name: 'Malayalam (മലയാളം)' },
+  { code: 'pa-IN', name: 'Punjabi (ਪੰਜਾਬੀ)' },
+];
 
 const content = {
   en: {
@@ -115,12 +130,14 @@ const content = {
 };
 
 export default function HomePage() {
-  const [language, setLanguage] = useState<Language>('en');
-  const copy = language === 'hi' ? content.hi : content.en;
+  const { language, setLanguage } = useAuthStore();
+  
+  const isHindi = language.startsWith('hi');
+  const copy = isHindi ? content.hi : content.en;
 
   useEffect(() => {
-    document.documentElement.lang = language === 'hi' ? 'hi' : 'en';
-  }, [language]);
+    document.documentElement.lang = isHindi ? 'hi' : 'en';
+  }, [isHindi]);
 
   return (
     <div className="relative min-h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
@@ -155,17 +172,22 @@ export default function HomePage() {
               {copy.nav[2]}
             </Link>
           </nav>
-
-          <div className="flex items-center space-x-3">
-            <select
-              className="bg-slate-900/50 border border-slate-700 text-slate-300 text-sm rounded-lg py-1 px-2 focus:outline-none focus:border-indigo-500"
-              value={language}
-              aria-label="Select language"
-              onChange={(event) => setLanguage(event.target.value as Language)}
-            >
-              <option value="en">English</option>
-              <option value="hi">हिंदी</option>
-            </select>
+          <div className="flex items-center space-x-4">
+            <div className="hidden sm:flex items-center space-x-2 bg-slate-800/50 rounded-full px-3 py-1.5 border border-slate-700/50">
+              <Globe className="w-4 h-4 text-slate-400" />
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="bg-transparent text-sm text-slate-200 focus:outline-none appearance-none cursor-pointer"
+              >
+                {LANGUAGES.map(l => (
+                  <option key={l.code} value={l.code} className="bg-slate-900 text-slate-200">{l.name}</option>
+                ))}
+              </select>
+            </div>
+            <Link href="/auth/login" className="text-sm font-medium text-indigo-400 hover:text-indigo-300">
+              {copy.signIn}
+            </Link>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               <WifiOff className="w-3.5 h-3.5" />
               {copy.status}

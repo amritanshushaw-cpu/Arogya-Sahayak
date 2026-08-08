@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, Loader2 } from 'lucide-react';
 import { extractVitalsFromText, ExtractedVitals } from '@/lib/ml/nerParser';
+import { useAuthStore } from '@/lib/authStore';
 
 interface VoiceInputProps {
   onVitalsExtracted: (vitals: ExtractedVitals, transcript: string) => void;
@@ -20,6 +21,7 @@ export function VoiceInput({ onVitalsExtracted }: VoiceInputProps) {
   const [isListening, setIsListening] = useState(false);
   const [isSupported, setIsSupported] = useState(true);
   const recognitionRef = useRef<any>(null);
+  const language = useAuthStore((state) => state.language);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -34,7 +36,7 @@ export function VoiceInput({ onVitalsExtracted }: VoiceInputProps) {
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.lang = 'en-IN';
+    recognition.lang = language;
 
     recognition.onstart = () => {
       setIsListening(true);

@@ -1,17 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-}
-
 interface AuthState {
   token: string | null;
-  user: User | null;
-  setAuth: (token: string, user: User) => void;
+  user: any | null;
+  role: string | null;
+  language: string;
+  setAuth: (token: string, user: any) => void;
+  setLanguage: (lang: string) => void;
   logout: () => void;
 }
 
@@ -20,11 +16,14 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       token: null,
       user: null,
-      setAuth: (token, user) => set({ token, user }),
-      logout: () => set({ token: null, user: null }),
+      role: null,
+      language: 'en-US',
+      setAuth: (token, user) => set({ token, user, role: user?.role || null }),
+      setLanguage: (lang) => set({ language: lang }),
+      logout: () => set({ token: null, user: null, role: null }),
     }),
     {
-      name: 'auth-storage',
+      name: 'arogya-auth',
     }
   )
 );
