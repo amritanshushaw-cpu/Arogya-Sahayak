@@ -195,22 +195,45 @@ export default function HomePage() {
             {copy.heroDescription}
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
             <Link
-              href="/auth/login"
-              className="group relative inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 text-white font-semibold text-lg shadow-xl shadow-indigo-600/30 hover:shadow-indigo-500/50 hover:scale-[1.02] transition-all duration-300 active:scale-95"
+              href="/auth/login?role=patient"
+              className="group relative flex flex-col items-center justify-center gap-3 px-6 py-8 rounded-2xl glass-card border border-indigo-500/20 hover:border-indigo-500/60 transition-all duration-300 hover:-translate-y-1 hover:bg-indigo-500/10 hover:shadow-[0_0_20px_rgba(99,102,241,0.2)]"
             >
-              <HeartPulse className="w-6 h-6 text-white group-hover:rotate-12 transition-transform duration-300" />
-              {copy.signIn}
-              <ArrowRight className="w-5 h-5 text-indigo-200 group-hover:translate-x-1 transition-transform" />
+              <div className="w-14 h-14 rounded-full bg-indigo-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Users className="w-7 h-7 text-indigo-400" />
+              </div>
+              <span className="font-semibold text-lg text-white">Patient Mode</span>
             </Link>
 
             <Link
-              href="/auth/register"
-              className="inline-flex items-center gap-2 px-7 py-4 rounded-xl glass-card text-slate-200 font-semibold text-lg hover:text-white hover:border-indigo-500/50 transition-all duration-300 active:scale-95"
+              href="/auth/login?role=asha"
+              className="group relative flex flex-col items-center justify-center gap-3 px-6 py-8 rounded-2xl glass-card border border-emerald-500/20 hover:border-emerald-500/60 transition-all duration-300 hover:-translate-y-1 hover:bg-emerald-500/10 hover:shadow-[0_0_20px_rgba(16,185,129,0.2)]"
             >
-              <Users className="w-5 h-5 text-indigo-400" />
-              {copy.signUp}
+              <div className="w-14 h-14 rounded-full bg-emerald-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <HeartPulse className="w-7 h-7 text-emerald-400" />
+              </div>
+              <span className="font-semibold text-lg text-white">ASHA Worker</span>
+            </Link>
+
+            <Link
+              href="/auth/login?role=phc"
+              className="group relative flex flex-col items-center justify-center gap-3 px-6 py-8 rounded-2xl glass-card border border-amber-500/20 hover:border-amber-500/60 transition-all duration-300 hover:-translate-y-1 hover:bg-amber-500/10 hover:shadow-[0_0_20px_rgba(245,158,11,0.2)]"
+            >
+              <div className="w-14 h-14 rounded-full bg-amber-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Hospital className="w-7 h-7 text-amber-400" />
+              </div>
+              <span className="font-semibold text-lg text-white">PHC Center</span>
+            </Link>
+
+            <Link
+              href="/auth/login?role=admin"
+              className="group relative flex flex-col items-center justify-center gap-3 px-6 py-8 rounded-2xl glass-card border border-rose-500/20 hover:border-rose-500/60 transition-all duration-300 hover:-translate-y-1 hover:bg-rose-500/10 hover:shadow-[0_0_20px_rgba(244,63,94,0.2)]"
+            >
+              <div className="w-14 h-14 rounded-full bg-rose-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <ShieldCheck className="w-7 h-7 text-rose-400" />
+              </div>
+              <span className="font-semibold text-lg text-white">App Admin</span>
             </Link>
           </div>
         </section>

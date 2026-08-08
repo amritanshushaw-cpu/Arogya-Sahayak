@@ -1,19 +1,29 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/lib/authStore';
 import Link from 'next/link';
 import { Lock, Phone, Loader2, HeartPulse } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function LoginPage() {
+function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('patient');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  
   const setAuth = useAuthStore((state) => state.setAuth);
+
+  useEffect(() => {
+    const urlRole = searchParams.get('role');
+    if (urlRole && ['patient', 'asha', 'phc', 'admin'].includes(urlRole)) {
+      setRole(urlRole);
+    }
+  }, [searchParams]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,5 +145,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center text-emerald-500"><Loader2 className="w-8 h-8 animate-spin" /></div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
