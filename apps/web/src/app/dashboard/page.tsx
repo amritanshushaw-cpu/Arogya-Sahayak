@@ -36,11 +36,17 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      <div className="mb-8">
+      <div className="mb-8 flex flex-col gap-4">
         <Link href="/dashboard/phc" className="glass-panel w-full p-4 rounded-xl flex items-center justify-center text-center gap-2 border border-purple-500/30 active:bg-slate-800 transition-colors shadow-lg shadow-purple-500/10">
           <div className="flex flex-col items-center">
             <span className="font-semibold text-lg text-purple-400">PHC District Dashboard</span>
             <span className="text-xs text-slate-400">View analytics and disease trends</span>
+          </div>
+        </Link>
+        <Link href="/teleconsult" className="glass-panel w-full p-4 rounded-xl flex items-center justify-center text-center gap-2 border border-blue-500/30 active:bg-slate-800 transition-colors shadow-lg shadow-blue-500/10">
+          <div className="flex flex-col items-center">
+            <span className="font-semibold text-lg text-blue-400">Teleconsultation</span>
+            <span className="text-xs text-slate-400">Connect with a doctor <span className="font-normal">(टेलीकंसल्टेशन)</span></span>
           </div>
         </Link>
       </div>

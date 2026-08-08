@@ -2,6 +2,7 @@
 
 import React from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import {
   LineChart,
   Line,
@@ -109,10 +110,13 @@ export default function PhcDashboardPage() {
                       {alert.risk}
                     </span>
                   </td>
-                  <td className="p-4">
+                  <td className="p-4 flex gap-3">
                     <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">
                       View Details
                     </button>
+                    <Link href="/teleconsult" className="text-purple-600 hover:text-purple-800 font-medium text-sm">
+                      Teleconsult
+                    </Link>
                   </td>
                 </tr>
               ))}
