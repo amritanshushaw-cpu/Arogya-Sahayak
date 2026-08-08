@@ -41,7 +41,7 @@ export function VoiceInput({ onVitalsExtracted }: VoiceInputProps) {
     };
 
     recognition.onresult = (event: any) => {
-      const results = Array.from(event.results ?? []);
+      const results = Array.from(event.results ?? []) as any[];
       const transcript = results[0]?.[0]?.transcript?.trim() ?? '';
       if (!transcript) return;
 
