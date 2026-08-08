@@ -108,6 +108,7 @@ export default function PatientDashboard() {
         recognitionRef.current = new SpeechRecognition();
         recognitionRef.current.continuous = true;
         recognitionRef.current.interimResults = true;
+        recognitionRef.current.lang = language; // IMPORTANT: Set initial language
 
         recognitionRef.current.onresult = (event: any) => {
           let currentTranscript = '';
@@ -126,6 +127,13 @@ export default function PatientDashboard() {
       }
     }
   }, []);
+
+  // Update speech recognition language when user changes dropdown
+  useEffect(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.lang = language;
+    }
+  }, [language]);
 
   const handleGetLocation = () => {
     setLocating(true);
