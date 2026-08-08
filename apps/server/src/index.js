@@ -40,7 +40,13 @@ const PORT = process.env.PORT || 3001;
 
 const start = async () => {
   try {
-    await fastify.listen({ port: Number(PORT), host: '0.0.0.0' });
+    // Auto-migrate database on boot
+    const db = require('./db/connection');
+    console.log('Running database migrations...');
+    await db.migrate.latest();
+    console.log('Migrations complete!');
+
+    await fastify.listen({ port: process.env.PORT || 3001, host: '0.0.0.0' });
     console.log(`Server listening on port ${PORT}`);
   } catch (err) {
     fastify.log.error(err);
