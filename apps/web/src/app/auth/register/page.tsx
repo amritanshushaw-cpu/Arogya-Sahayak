@@ -45,7 +45,8 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/register', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://schemegg.onrender.com';
+      const res = await fetch(`${apiUrl}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, phone, password, role, lat, lng }),
