@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuthStore } from '@/lib/authStore';
-import { Mic, MicOff, Globe, Activity, Send, Loader2, User, HeartPulse, FileText } from 'lucide-react';
+import { Mic, MicOff, Globe, Activity, Send, Loader2, User, HeartPulse, FileText, MapPin, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
@@ -34,11 +34,23 @@ export default function PatientDashboard() {
     familyHistory: ''
   });
   const [infoSaved, setInfoSaved] = useState(false);
+  const [locating, setLocating] = useState(false);
 
   // Vitals State
+  const [vitalsForm, setVitalsForm] = useState({
+    bp_systolic: '',
+    bp_diastolic: '',
+    blood_glucose: '',
+    temperature: '',
+    pulse: '',
+    spo2: '',
+    weight: '',
+    height: ''
+  });
   const [selectedLang, setSelectedLang] = useState('en-US');
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
+  const [isAutofilling, setIsAutofilling] = useState(false);
   const recognitionRef = useRef<any>(null);
 
   // Detection State
@@ -71,10 +83,33 @@ export default function PatientDashboard() {
     }
   }, []);
 
+  const handleGetLocation = () => {
+    setLocating(true);
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser');
+      setLocating(false);
+      return;
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setInfoForm({ ...infoForm, village: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}` });
+        toast.success('Location fetched successfully');
+        setLocating(false);
+      },
+      (error) => {
+        console.error(error);
+        toast.error('Unable to retrieve your location');
+        setLocating(false);
+      }
+    );
+  };
+
   const handleInfoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!infoForm.age || !infoForm.village) {
-      toast.error('Please fill in age and village');
+      toast.error('Please fill in age and village/location');
       return;
     }
 
@@ -124,9 +159,45 @@ export default function PatientDashboard() {
     }
   };
 
-  const submitVitals = () => {
+  const autofillVitals = async () => {
     if (!transcript.trim()) {
-      toast.error('Please record or type your vitals');
+      toast.error('Please record audio first before autofilling.');
+      return;
+    }
+    
+    setIsAutofilling(true);
+    try {
+      const prompt = `Extract vitals from this text and return ONLY a valid JSON object. Keys must be exactly: bp_systolic, bp_diastolic, blood_glucose, temperature, pulse, spo2, weight, height. If a value is missing, set it to an empty string "". Text: "${transcript}"`;
+      
+      const response = await fetch(`${apiUrl}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: prompt })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const textReply = data.reply || data.response || data.answer || "{}";
+        const jsonMatch = textReply.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          setVitalsForm(prev => ({ ...prev, ...parsed }));
+          toast.success('Vitals autofilled successfully!');
+        } else {
+          toast.error('Could not extract vitals perfectly.');
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Autofill failed. Check network or type manually.');
+    } finally {
+      setIsAutofilling(false);
+    }
+  };
+
+  const submitVitals = () => {
+    if (!transcript.trim() && !vitalsForm.temperature && !vitalsForm.bp_systolic) {
+      toast.error('Please record your symptoms or enter your vitals');
       return;
     }
     setStep('detection');
@@ -139,8 +210,8 @@ export default function PatientDashboard() {
     
     try {
       const langName = LANGUAGES.find(l => l.code === selectedLang)?.name || 'English';
-      
-      const prompt = `Act as a medical risk analyzer. Patient Age: ${infoForm.age}, Gender: ${infoForm.gender}, Family History: ${infoForm.familyHistory}. Patient Vitals/Symptoms: "${transcript}". Provide a brief risk assessment and detection analysis. YOU MUST OUTPUT ENTIRELY IN THIS LANGUAGE: ${langName}.`;
+      const vitalsString = JSON.stringify(vitalsForm);
+      const prompt = `Act as a medical risk analyzer. Patient Age: ${infoForm.age}, Gender: ${infoForm.gender}, Family History: ${infoForm.familyHistory}. Patient Vitals entered: ${vitalsString}. Patient Symptoms Audio Transcript: "${transcript}". Provide a detailed disease detection analysis and risk assessment. YOU MUST OUTPUT ENTIRELY IN THIS LANGUAGE: ${langName}.`;
 
       const response = await fetch(`${apiUrl}/api/chat`, {
         method: 'POST',
@@ -162,15 +233,15 @@ export default function PatientDashboard() {
       let conditions = [];
       const lowerTranscript = transcript.toLowerCase();
       
-      if (lowerTranscript.includes('sugar') || lowerTranscript.includes('diabetes') || Number(infoForm.age) > 45) {
+      if (lowerTranscript.includes('sugar') || lowerTranscript.includes('diabetes') || Number(vitalsForm.blood_glucose) > 140) {
         riskScore += 30;
         conditions.push('Diabetes Risk');
       }
-      if (lowerTranscript.includes('pressure') || lowerTranscript.includes('bp') || lowerTranscript.includes('hypertension')) {
+      if (lowerTranscript.includes('pressure') || lowerTranscript.includes('bp') || Number(vitalsForm.bp_systolic) > 140) {
         riskScore += 30;
         conditions.push('Hypertension Risk');
       }
-      if (lowerTranscript.includes('fever') || lowerTranscript.includes('temperature')) {
+      if (lowerTranscript.includes('fever') || lowerTranscript.includes('temperature') || Number(vitalsForm.temperature) > 99.5) {
         riskScore += 20;
         conditions.push('Fever / Infection');
       }
@@ -179,10 +250,14 @@ export default function PatientDashboard() {
       if (riskScore > 50) level = 'HIGH';
       else if (riskScore > 20) level = 'MODERATE';
 
-      setAnalysisResult(`[OFFLINE MODE]\n\nBased on basic parameters:\nRisk Level: ${level}\nPotential flags: ${conditions.join(', ') || 'None detected'}\n\nPlease consult a doctor for accurate diagnosis.`);
+      setAnalysisResult(`[OFFLINE MODE]\n\nBased on basic parameters and vitals:\nRisk Level: ${level}\nPotential flags: ${conditions.join(', ') || 'None detected'}\n\nPlease consult a doctor for accurate diagnosis.`);
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const handleVitalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setVitalsForm({ ...vitalsForm, [e.target.name]: e.target.value });
   };
 
   return (
@@ -191,7 +266,7 @@ export default function PatientDashboard() {
       <div className="absolute top-0 left-0 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
 
-      <div className="w-full max-w-3xl relative z-10">
+      <div className="w-full max-w-4xl relative z-10">
         
         {/* Navigation Tabs */}
         <div className="flex bg-white/5 backdrop-blur-md rounded-2xl p-2 mb-6 border border-white/10 gap-2">
@@ -209,9 +284,9 @@ export default function PatientDashboard() {
             <HeartPulse className="w-4 h-4" /> Vitals
           </button>
           <button 
-            onClick={() => (infoSaved && transcript) && setStep('detection')}
-            disabled={!infoSaved || !transcript}
-            className={`flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-medium transition-all ${step === 'detection' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400'} ${(!infoSaved || !transcript) ? 'opacity-50 cursor-not-allowed' : 'hover:text-white hover:bg-white/5'}`}
+            onClick={() => (infoSaved && (transcript || vitalsForm.temperature)) && setStep('detection')}
+            disabled={!infoSaved || (!transcript && !vitalsForm.temperature)}
+            className={`flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-medium transition-all ${step === 'detection' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400'} ${(!infoSaved || (!transcript && !vitalsForm.temperature)) ? 'opacity-50 cursor-not-allowed' : 'hover:text-white hover:bg-white/5'}`}
           >
             <Activity className="w-4 h-4" /> Detection
           </button>
@@ -230,7 +305,7 @@ export default function PatientDashboard() {
                 <p className="text-slate-400">Please provide your details before recording vitals.</p>
               </header>
 
-              <form onSubmit={handleInfoSubmit} className="space-y-4">
+              <form onSubmit={handleInfoSubmit} className="space-y-4 max-w-2xl mx-auto">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm text-slate-400">Age</label>
@@ -258,13 +333,25 @@ export default function PatientDashboard() {
                 
                 <div className="space-y-2">
                   <label className="text-sm text-slate-400">Village / Location</label>
-                  <input 
-                    type="text" 
-                    required
-                    value={infoForm.village}
-                    onChange={e => setInfoForm({...infoForm, village: e.target.value})}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-blue-500"
-                  />
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      required
+                      value={infoForm.village}
+                      onChange={e => setInfoForm({...infoForm, village: e.target.value})}
+                      className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter location or use auto-fetch"
+                    />
+                    <button 
+                      type="button" 
+                      onClick={handleGetLocation}
+                      disabled={locating}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded-xl flex items-center gap-2 transition-colors disabled:opacity-50"
+                    >
+                      {locating ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
+                      {locating ? 'Locating...' : 'Get Location'}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -288,59 +375,109 @@ export default function PatientDashboard() {
           {/* STEP 2: VITALS */}
           {step === 'vitals' && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col h-full">
-              <header className="mb-6">
-                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                  <Mic className="w-6 h-6 text-purple-400" /> Record Vitals
-                </h2>
-                <p className="text-slate-400">Speak your symptoms and vitals in your local language.</p>
+              <header className="mb-6 flex justify-between items-end">
+                <div>
+                  <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                    <HeartPulse className="w-6 h-6 text-pink-400" /> Patient Vitals
+                  </h2>
+                  <p className="text-slate-400">Record symptoms via audio to autofill parameters, or type manually.</p>
+                </div>
+                
+                <div className="w-64">
+                  <label className="text-sm text-slate-400 flex items-center gap-2 mb-2">
+                    <Globe className="w-4 h-4" /> Audio Language
+                  </label>
+                  <select 
+                    value={selectedLang}
+                    onChange={(e) => setSelectedLang(e.target.value)}
+                    className="w-full bg-slate-900 border border-white/10 rounded-xl p-2 text-sm text-white focus:ring-2 focus:ring-blue-500"
+                  >
+                    {LANGUAGES.map(lang => (
+                      <option key={lang.code} value={lang.code}>{lang.name}</option>
+                    ))}
+                  </select>
+                </div>
               </header>
 
-              <div className="mb-6">
-                <label className="text-sm text-slate-400 flex items-center gap-2 mb-2">
-                  <Globe className="w-4 h-4" /> Language for Speech & Output
-                </label>
-                <select 
-                  value={selectedLang}
-                  onChange={(e) => setSelectedLang(e.target.value)}
-                  className="w-full bg-slate-900 border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-blue-500"
-                >
-                  {LANGUAGES.map(lang => (
-                    <option key={lang.code} value={lang.code}>{lang.name}</option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                
+                {/* Audio Recording & Transcript */}
+                <div className="flex flex-col gap-4">
+                  <div className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 min-h-[200px] relative">
+                    <textarea 
+                      value={transcript}
+                      onChange={(e) => setTranscript(e.target.value)}
+                      placeholder="Speak to record your symptoms, or type here..."
+                      className="w-full h-full bg-transparent text-white resize-none outline-none placeholder:text-slate-500"
+                    />
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={toggleRecording}
+                      className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-all ${
+                        isRecording 
+                          ? 'bg-red-500/20 text-red-400 border border-red-500/50 hover:bg-red-500/30' 
+                          : 'bg-white/10 text-white hover:bg-white/20'
+                      }`}
+                    >
+                      {isRecording ? <><MicOff className="w-5 h-5" /> Stop</> : <><Mic className="w-5 h-5" /> Record</>}
+                    </button>
+                    <button 
+                      onClick={autofillVitals}
+                      disabled={!transcript || isAutofilling}
+                      className="flex-1 bg-blue-600/20 text-blue-400 border border-blue-500/50 hover:bg-blue-600/30 py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                    >
+                      {isAutofilling ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                      Autofill Params
+                    </button>
+                  </div>
+                </div>
+
+                {/* Vitals Parameters Grid */}
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-6 grid grid-cols-2 gap-4 content-start">
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">BP Systolic</label>
+                    <input type="number" name="bp_systolic" value={vitalsForm.bp_systolic} onChange={handleVitalChange} placeholder="120" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">BP Diastolic</label>
+                    <input type="number" name="bp_diastolic" value={vitalsForm.bp_diastolic} onChange={handleVitalChange} placeholder="80" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">Glucose (mg/dL)</label>
+                    <input type="number" name="blood_glucose" value={vitalsForm.blood_glucose} onChange={handleVitalChange} placeholder="95" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">Temp (°F)</label>
+                    <input type="number" name="temperature" value={vitalsForm.temperature} onChange={handleVitalChange} placeholder="98.6" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">Pulse (bpm)</label>
+                    <input type="number" name="pulse" value={vitalsForm.pulse} onChange={handleVitalChange} placeholder="72" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">SpO2 (%)</label>
+                    <input type="number" name="spo2" value={vitalsForm.spo2} onChange={handleVitalChange} placeholder="98" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">Weight (kg)</label>
+                    <input type="number" name="weight" value={vitalsForm.weight} onChange={handleVitalChange} placeholder="70" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">Height (cm)</label>
+                    <input type="number" name="height" value={vitalsForm.height} onChange={handleVitalChange} placeholder="170" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
+                  </div>
+                </div>
+
               </div>
 
-              <div className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 min-h-[150px] mb-6">
-                <textarea 
-                  value={transcript}
-                  onChange={(e) => setTranscript(e.target.value)}
-                  placeholder="Your vitals will appear here. You can also type them manually..."
-                  className="w-full h-full bg-transparent text-white resize-none outline-none placeholder:text-slate-500"
-                />
-              </div>
-
-              <div className="flex gap-4">
-                <button 
-                  onClick={toggleRecording}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-all ${
-                    isRecording 
-                      ? 'bg-red-500/20 text-red-400 border border-red-500/50 hover:bg-red-500/30' 
-                      : 'bg-white/10 text-white hover:bg-white/20'
-                  }`}
-                >
-                  {isRecording ? (
-                    <><MicOff className="w-5 h-5" /> Stop Recording</>
-                  ) : (
-                    <><Mic className="w-5 h-5" /> Start Recording</>
-                  )}
-                </button>
-                <button 
-                  onClick={submitVitals}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/25"
-                >
-                  Analyze <Send className="w-4 h-4" />
-                </button>
-              </div>
+              <button 
+                onClick={submitVitals}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 rounded-xl font-medium flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/25 mt-auto"
+              >
+                Analyze Health Risk <Send className="w-5 h-5" />
+              </button>
             </div>
           )}
 
