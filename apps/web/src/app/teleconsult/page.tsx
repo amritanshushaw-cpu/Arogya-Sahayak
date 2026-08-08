@@ -6,67 +6,100 @@ import { Mic, MicOff, Video, VideoOff, PhoneOff, Wifi, WifiOff, ArrowLeft } from
 
 export default function TeleconsultPage() {
   const localVideoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [networkDrop, setNetworkDrop] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function setupMedia() {
+      if (typeof window === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+        setErrorMessage('Camera and microphone access are not available in this browser.');
+        return;
+      }
+
       try {
         const mediaStream = await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: true,
         });
+        if (cancelled) {
+          mediaStream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+
+        streamRef.current = mediaStream;
         setStream(mediaStream);
+        setErrorMessage(null);
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = mediaStream;
         }
       } catch (err) {
-        console.error("Error accessing media devices.", err);
+        console.error('Error accessing media devices.', err);
+        if (!cancelled) {
+          setErrorMessage('Unable to access your camera or microphone. Please allow permissions and try again.');
+        }
       }
     }
+
     setupMedia();
 
     return () => {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
+      cancelled = true;
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
       }
     };
   }, []);
 
   const toggleAudio = () => {
-    if (stream) {
-      stream.getAudioTracks().forEach(track => {
-        track.enabled = !track.enabled;
-      });
-      setIsAudioMuted(!isAudioMuted);
-    }
+    setIsAudioMuted((prev) => {
+      const next = !prev;
+      if (streamRef.current) {
+        streamRef.current.getAudioTracks().forEach((track) => {
+          track.enabled = !next;
+        });
+      }
+      return next;
+    });
   };
 
   const toggleVideo = () => {
-    if (stream) {
-      stream.getVideoTracks().forEach(track => {
-        track.enabled = !track.enabled;
-      });
-      setIsVideoOff(!isVideoOff);
-    }
+    setIsVideoOff((prev) => {
+      const next = !prev;
+      if (streamRef.current) {
+        streamRef.current.getVideoTracks().forEach((track) => {
+          track.enabled = !next;
+        });
+      }
+      return next;
+    });
   };
 
   const simulateNetworkDrop = () => {
-    if (stream) {
-      stream.getVideoTracks().forEach(track => {
-        track.enabled = networkDrop; // If networkDrop was true, we are recovering, so enable it (unless they manually toggled, but let's keep it simple)
-      });
-    }
-    setNetworkDrop(!networkDrop);
+    setNetworkDrop((prev) => {
+      const next = !prev;
+      if (streamRef.current) {
+        streamRef.current.getVideoTracks().forEach((track) => {
+          track.enabled = !next;
+        });
+      }
+      return next;
+    });
   };
 
   const endCall = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
     }
-    window.location.href = '/dashboard';
+    setStream(null);
+    window.location.assign('/dashboard');
   };
 
   return (
@@ -121,6 +154,9 @@ export default function TeleconsultPage() {
 
       {/* Controls */}
       <div className="bg-slate-900 p-6 flex flex-col items-center justify-center gap-4 pb-8">
+        {errorMessage && (
+          <p className="text-sm text-red-400 text-center max-w-md">{errorMessage}</p>
+        )}
         <div className="flex gap-4">
           <button 
             onClick={toggleAudio}
