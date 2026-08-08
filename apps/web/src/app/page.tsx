@@ -593,7 +593,7 @@ export default function HomePage() {
   const { language, setLanguage } = useAuthStore();
 
   const shortLang = language.split('-')[0];
-  const copy = content[shortLang] || content.en;
+  const copy = (content as any)[shortLang] || content.en;
 
   useEffect(() => {
     document.documentElement.lang = language || 'en';
