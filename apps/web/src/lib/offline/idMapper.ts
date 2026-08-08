@@ -3,7 +3,7 @@
  * Utility to resolve server IDs from local IDs for various entities.
  * It does NOT perform any network calls – it simply looks up the Dexie tables.
  */
-import { db } from './db';
+import { db } from '../db';
 
 export async function getPatientServerId(localId: string): Promise<string | null> {
   const patient = await db.patients.get(localId);

@@ -3,7 +3,7 @@
  * They strip out local‑only synchronization metadata and replace local foreign keys with server IDs.
  * If a required server ID is missing, a clear error is thrown so that the sync engine can retry later.
  */
-import { Patient, Screening, Alert } from './db';
+import { Patient, Screening, Alert } from '../db';
 import { getPatientServerId, getScreeningServerId } from './idMapper';
 
 /**
