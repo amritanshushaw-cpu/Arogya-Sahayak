@@ -260,6 +260,28 @@ export default function PatientDashboard() {
     setVitalsForm({ ...vitalsForm, [e.target.name]: e.target.value });
   };
 
+  const speakResult = () => {
+    if (!analysisResult) return;
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      // Stop any ongoing speech
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(analysisResult);
+      utterance.lang = selectedLang;
+      
+      // Try to find a voice that matches the selected language
+      const voices = window.speechSynthesis.getVoices();
+      const matchVoice = voices.find(v => v.lang.startsWith(selectedLang.split('-')[0]));
+      if (matchVoice) {
+        utterance.voice = matchVoice;
+      }
+      
+      window.speechSynthesis.speak(utterance);
+    } else {
+      toast.error('Text-to-speech is not supported in this browser.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 md:p-8 font-sans relative overflow-hidden">
       {/* Background Orbs */}
@@ -484,11 +506,21 @@ export default function PatientDashboard() {
           {/* STEP 3: DETECTION */}
           {step === 'detection' && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <header className="mb-6">
-                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                  <Activity className="w-6 h-6 text-green-400" /> Disease Detection Results
-                </h2>
-                <p className="text-slate-400">AI analysis based on your info and vitals.</p>
+              <header className="mb-6 flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                    <Activity className="w-6 h-6 text-green-400" /> Disease Detection Results
+                  </h2>
+                  <p className="text-slate-400">AI analysis based on your info and vitals.</p>
+                </div>
+                {!isAnalyzing && analysisResult && (
+                  <button 
+                    onClick={speakResult}
+                    className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-xl font-medium transition-colors flex items-center gap-2"
+                  >
+                    <Mic className="w-4 h-4" /> Listen to Result
+                  </button>
+                )}
               </header>
 
               {isAnalyzing ? (
