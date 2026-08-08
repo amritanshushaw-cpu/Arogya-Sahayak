@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Toaster } from 'react-hot-toast';
 import { NetworkSyncProvider } from '../components/NetworkSyncProvider';
+import { Chatbot } from '../components/Chatbot';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -23,7 +24,7 @@ export default function RootLayout({
       <body className="bg-slate-950 text-white min-h-screen antialiased selection:bg-indigo-500 selection:text-white">
         <NetworkSyncProvider>
           {children}
-
+          <Chatbot />
         </NetworkSyncProvider>
         <Toaster
           position="top-right"
