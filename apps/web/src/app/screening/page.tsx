@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { ArrowLeft, Mic, Save, Activity } from 'lucide-react';
 import { calculateRisks, RiskScores } from '@/lib/ml/riskEngine';
 import { RiskCard } from '@/components/RiskCard';
+import { VoiceInput } from '@/components/VoiceInput';
+import { ExtractedVitals } from '@/lib/ml/nerParser';
 
 export default function ScreeningForm() {
   const [formData, setFormData] = useState({
@@ -22,6 +24,27 @@ export default function ScreeningForm() {
     scores: RiskScores;
     reasons: Record<keyof RiskScores, string[]>;
   } | null>(null);
+
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const handleVitalsExtracted = (vitals: ExtractedVitals, transcript: string) => {
+    setFormData(prev => ({
+      ...prev,
+      ...vitals
+    }));
+
+    const extractedKeys = Object.keys(vitals) as (keyof ExtractedVitals)[];
+    if (extractedKeys.length > 0) {
+      const summary = extractedKeys.map(k => `${k}: ${vitals[k]}`).join(', ');
+      setToastMessage(`Extracted: ${summary}`);
+    } else {
+      setToastMessage(`Could not extract any vitals from speech.`);
+    }
+
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 5000);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -91,6 +114,12 @@ export default function ScreeningForm() {
       <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-[-10%] left-[-10%] w-64 h-64 bg-danger/10 rounded-full blur-3xl pointer-events-none"></div>
 
+      {toastMessage && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-800 text-white px-4 py-3 rounded-lg shadow-xl border border-primary/50 text-sm max-w-sm w-[90%] text-center animate-in fade-in slide-in-from-top-4">
+          {toastMessage}
+        </div>
+      )}
+
       <header className="mb-6 flex items-center justify-between relative z-10">
         <div className="flex items-center gap-4">
           <Link href="/dashboard" className="w-10 h-10 glass-panel rounded-full flex items-center justify-center border border-slate-700 text-slate-300">
@@ -101,9 +130,7 @@ export default function ScreeningForm() {
             <p className="text-xs text-slate-400">स्वास्थ्य जांच</p>
           </div>
         </div>
-        <button className="w-12 h-12 bg-primary/20 text-primary rounded-full flex items-center justify-center border border-primary/30 shadow-lg shadow-primary/20 animate-pulse">
-          <Mic size={24} />
-        </button>
+        <VoiceInput onVitalsExtracted={handleVitalsExtracted} />
       </header>
 
       {!assessmentResult ? (
@@ -111,7 +138,7 @@ export default function ScreeningForm() {
           <div className="glass-panel p-4 rounded-2xl border border-slate-700/50 mb-6 relative z-10">
             <p className="text-sm text-slate-300 text-center flex items-center justify-center gap-2">
               <Mic size={16} className="text-primary" />
-              Tap the mic icon to enter data using voice (Voice feature coming soon)
+              Tap the mic icon to enter vitals using voice
             </p>
           </div>
 
