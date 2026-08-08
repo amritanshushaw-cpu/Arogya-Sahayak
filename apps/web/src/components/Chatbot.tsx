@@ -145,7 +145,7 @@ export const Chatbot = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 p-4 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all z-50 flex items-center justify-center animate-bounce"
+          className="fixed bottom-6 right-6 p-4 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all z-50 flex items-center justify-center"
         >
           <MessageSquare size={24} />
         </button>
