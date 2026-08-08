@@ -55,15 +55,10 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (res.ok && data.token) {
-        setAuth(data.token, data.user);
-        toast.success('Account created successfully!');
-        if (role === 'patient') {
-          router.push('/patient-vitals');
-        } else {
-          router.push('/dashboard');
-        }
+        toast.success('Registration successful! Please sign in.');
+        router.push('/auth/login');
       } else {
-        toast.error(data.error || data.message || 'Registration failed');
+        toast.error(data.error || 'Registration failed');
       }
     } catch (error) {
       console.error(error);
