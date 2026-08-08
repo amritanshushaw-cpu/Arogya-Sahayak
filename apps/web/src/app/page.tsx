@@ -55,6 +55,10 @@ export default function HomePage() {
           </nav>
 
           <div className="flex items-center space-x-3">
+            <select className="bg-slate-900/50 border border-slate-700 text-slate-300 text-sm rounded-lg py-1 px-2 focus:outline-none focus:border-indigo-500">
+              <option value="en">English</option>
+              <option value="hi">हिंदी</option>
+            </select>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               <WifiOff className="w-3.5 h-3.5" />
               Offline PWA Ready
@@ -88,28 +92,20 @@ export default function HomePage() {
 
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link
-              href="/screening"
+              href="/auth/login"
               className="group relative inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 text-white font-semibold text-lg shadow-xl shadow-indigo-600/30 hover:shadow-indigo-500/50 hover:scale-[1.02] transition-all duration-300 active:scale-95"
             >
-              <Stethoscope className="w-6 h-6 text-white group-hover:rotate-12 transition-transform duration-300" />
-              Start Screening
+              <HeartPulse className="w-6 h-6 text-white group-hover:rotate-12 transition-transform duration-300" />
+              Sign In
               <ArrowRight className="w-5 h-5 text-indigo-200 group-hover:translate-x-1 transition-transform" />
             </Link>
 
             <Link
-              href="/dashboard"
+              href="/auth/register"
               className="inline-flex items-center gap-2 px-7 py-4 rounded-xl glass-card text-slate-200 font-semibold text-lg hover:text-white hover:border-indigo-500/50 transition-all duration-300 active:scale-95"
             >
-              <LayoutDashboard className="w-5 h-5 text-indigo-400" />
-              Admin Dashboard
-            </Link>
-            
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 px-7 py-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-semibold text-lg hover:bg-emerald-500/20 hover:text-white transition-all duration-300 active:scale-95"
-            >
-              <Users className="w-5 h-5 text-emerald-400" />
-              Judge / Guest Access
+              <Users className="w-5 h-5 text-indigo-400" />
+              Sign Up
             </Link>
           </div>
         </section>

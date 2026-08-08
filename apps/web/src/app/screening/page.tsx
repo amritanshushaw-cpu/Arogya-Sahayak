@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Mic, Save, Activity } from 'lucide-react';
 import { calculateRisks, RiskScores } from '@/lib/ml/riskEngine';
 import { RiskCard } from '@/components/RiskCard';
@@ -9,7 +10,11 @@ import { VoiceInput } from '@/components/VoiceInput';
 import { ExtractedVitals } from '@/lib/ml/nerParser';
 import toast, { Toaster } from 'react-hot-toast';
 
-export default function ScreeningForm() {
+function ScreeningContent() {
+  const searchParams = useSearchParams();
+  const patientId = searchParams.get('patientId');
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     systolicBP: '',
     diastolicBP: '',
@@ -138,15 +143,15 @@ export default function ScreeningForm() {
       )}
 
       <header className="mb-6 flex items-center justify-between relative z-10">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="w-10 h-10 glass-panel rounded-full flex items-center justify-center border border-slate-700 text-slate-300">
-            <ArrowLeft size={20} />
-          </Link>
-          <div>
-            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400">Screening</h1>
-            <p className="text-xs text-slate-400">स्वास्थ्य जांच</p>
+          <div className="flex justify-between items-center w-full mb-8">
+            <Link href={patientId ? `/patients/${patientId}` : "/dashboard"} className="p-2 rounded-full bg-slate-900/50 hover:bg-slate-800 transition-colors border border-slate-700 text-slate-300">
+              <ArrowLeft size={24} />
+            </Link>
+            <div className="flex-1 text-center pr-10">
+              <h1 className="text-2xl font-bold text-white bg-clip-text">Health Screening</h1>
+              <p className="text-xs text-slate-400 mt-1 font-medium">स्वास्थ्य जांच {patientId && `| Patient ID: ${patientId.slice(0, 6)}`}</p>
+            </div>
           </div>
-        </div>
         <VoiceInput onVitalsExtracted={handleVitalsExtracted} />
       </header>
 
@@ -254,7 +259,7 @@ export default function ScreeningForm() {
         <div className="relative z-10 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="glass-panel p-6 rounded-2xl border border-slate-700/50 text-center">
             <h2 className="text-xl font-bold text-slate-200 mb-2">Assessment Complete</h2>
-            <p className="text-slate-400 text-sm mb-4">Patient risk profile has been generated based on the provided vitals.</p>
+            <p className="text-slate-400 text-sm mb-4">Risk profile has been generated based on the provided vitals {patientId && `for patient ${patientId.slice(0, 6)}`}.</p>
             <div className="inline-block px-4 py-2 rounded-lg bg-slate-800/50 border border-slate-700">
               <span className="text-sm text-slate-400">Overall Risk Level: </span>
               <span className={`font-bold ${overallRisk?.color}`}>{overallRisk?.level}</span>
@@ -287,14 +292,33 @@ export default function ScreeningForm() {
             </div>
           </div>
 
-          <button 
-            onClick={() => setAssessmentResult(null)}
-            className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-4 rounded-xl flex items-center justify-center transition-colors border border-slate-700"
-          >
-            New Screening
-          </button>
+          <div className="flex gap-4">
+            <button 
+              onClick={() => setAssessmentResult(null)}
+              className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-medium py-4 rounded-xl flex items-center justify-center transition-colors border border-slate-700"
+            >
+              New Screening
+            </button>
+            {patientId && (
+              <button 
+                onClick={() => router.push(`/patients/${patientId}`)}
+                className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-4 rounded-xl flex items-center justify-center transition-colors border border-emerald-500/50 shadow-lg shadow-emerald-500/20"
+              >
+                Back to Patient
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
   );
 }
+
+export default function ScreeningForm() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center text-emerald-500">Loading...</div>}>
+      <ScreeningContent />
+    </Suspense>
+  );
+}
+
