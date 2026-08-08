@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Toaster } from 'react-hot-toast';
+import { NetworkSyncProvider } from '../components/NetworkSyncProvider';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -20,7 +21,10 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body className="bg-slate-950 text-white min-h-screen antialiased selection:bg-indigo-500 selection:text-white">
-        {children}
+        <NetworkSyncProvider>
+          {children}
+
+        </NetworkSyncProvider>
         <Toaster
           position="top-right"
           toastOptions={{
