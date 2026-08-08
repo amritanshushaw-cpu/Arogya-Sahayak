@@ -44,13 +44,14 @@ module.exports = async function (fastify, opts) {
       };
 
       // Hybrid AI Pipeline: Cloud LLM fallback if connected
-      if (process.env.GROQ_API_KEY) {
+      const apiKey = process.env.GROQ_API_KEY || process.env.ml_key;
+      if (apiKey) {
         try {
           console.log("[HYBRID AI] Connection detected. Calling Groq LPU...");
           const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+              'Authorization': `Bearer ${apiKey}`,
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
