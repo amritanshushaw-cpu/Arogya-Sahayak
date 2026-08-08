@@ -1,35 +1,67 @@
 # Arogya Sahayak (आरोग्य सहायक)
 
-**AI-Powered Early Disease Risk Prediction & Rural Health Access**
+Arogya Sahayak is an offline-first Progressive Web Application (PWA) designed for ASHA workers and rural health teams in India. It combines on-device AI screening, multilingual support, mobile OTP authentication, and lightweight teleconsultation workflows for low-connectivity environments.
 
-Arogya Sahayak is an offline-first Progressive Web Application (PWA) designed for ASHA (Accredited Social Health Activist) workers in rural India. It provides zero-latency AI diagnostic intelligence without the need for constant internet connectivity.
+## 🚀 What this project includes
+- Offline-first health screening with local storage and PWA-friendly behavior
+- OTP-based mobile sign-in and sign-up flow for quick onboarding
+- English and Hindi support on the landing experience
+- Patient screening, dashboard, and teleconsultation views for field use
+- SMS/OTP delivery support with a mock fallback for local development
 
-## 🚀 Live Links
-- **Frontend App**: [https://arogaya-sahayak.vercel.app](https://arogaya-sahayak.vercel.app)
-- **Backend API API**: [https://schemegg.onrender.com/health](https://schemegg.onrender.com/health)
+## 🧩 Tech stack
+- Frontend: Next.js 14, React, TypeScript, Tailwind CSS, Zustand, Dexie, Leaflet
+- Backend: Node.js, Fastify, JWT, Knex.js, PostgreSQL
+- AI/ML: ONNX Runtime Web for on-device inference
 
-## ✨ Core Features
-1. **AI Risk Screening**: On-device neural network models predict cardiovascular, diabetes, and respiratory risk instantly (Offline PWA).
-2. **Vernacular Voice Input**: Speech-to-text symptom intake for rapid patient registration.
-3. **Teleconsultation**: Low-bandwidth WebRTC video connection linking rural workers directly with district hospital doctors.
-4. **Admin Dashboard**: Real-time epidemiological heatmaps and village health statistics.
-5. **Auto-Alert SMS (Mocked for Demo)**: Integrates Twilio SMS alerts for doctors when a high-risk patient is detected.
+## 📁 Project structure
+- apps/web: Next.js frontend and UI pages
+- apps/server: Fastify API, auth routes, database migrations, and OTP helpers
+- apps/server/src/db: database connection and schema setup
 
-## 🛠 Tech Stack
-- **Frontend**: Next.js 14, Tailwind CSS, Lucide Icons, Leaflet Maps
-- **Backend**: Node.js, Fastify, Supabase (PostgreSQL), Knex.js
-- **Machine Learning**: ONNX Runtime Web (On-device Inference)
+## ▶️ Local development
+Prerequisites:
+- Node.js 18+
+- npm
 
-## 📦 Local Setup
+### 1) Install dependencies
 ```bash
-# Install dependencies
+cd apps/server
 npm install
 
-# Start Backend
+cd ../web
+npm install
+```
+
+### 2) Start the backend
+```bash
 cd apps/server
 npm run dev
+```
 
-# Start Frontend
+### 3) Start the frontend
+In a second terminal:
+```bash
 cd apps/web
 npm run dev
 ```
+
+Open http://localhost:3000 to view the app.
+
+The frontend proxies API calls to the backend on http://localhost:3001 by default.
+
+### Optional environment variables
+For local development, you can set:
+```bash
+JWT_SECRET=your-dev-secret
+PORT=3001
+```
+
+If Twilio credentials are not configured, the OTP flow will fall back to a mock local code for testing.
+
+## 🌐 Demo links
+- Frontend: https://arogaya-sahayak.vercel.app
+- Backend health check: https://schemegg.onrender.com/health
+
+## 📝 Notes
+This repository is actively evolving and is intended for demo, prototyping, and field-use validation of rural health workflows.
