@@ -1,4 +1,4 @@
-const fetch = require('node-fetch'); // Fastify standard node fetch or global fetch in Node 18+
+// Using native fetch in Node 18+
 
 module.exports = async function (fastify, opts) {
   fastify.post('/', async (request, reply) => {
