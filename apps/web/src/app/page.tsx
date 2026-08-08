@@ -131,13 +131,13 @@ const content = {
 
 export default function HomePage() {
   const { language, setLanguage } = useAuthStore();
-  
-  const isHindi = language.startsWith('hi');
-  const copy = isHindi ? content.hi : content.en;
+
+  const shortLang = language.split('-')[0];
+  const copy = content[shortLang] || content.en;
 
   useEffect(() => {
-    document.documentElement.lang = isHindi ? 'hi' : 'en';
-  }, [isHindi]);
+    document.documentElement.lang = language || 'en';
+  }, [language]);
 
   return (
     <div className="relative min-h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
