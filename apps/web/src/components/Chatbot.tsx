@@ -145,9 +145,10 @@ export const Chatbot = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 p-4 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all z-50 flex items-center justify-center"
+          aria-label="Open AI Assistant"
+          className="fixed bottom-6 right-6 p-4 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-colors focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:outline-none z-50 flex items-center justify-center"
         >
-          <MessageSquare size={24} />
+          <MessageSquare size={24} aria-hidden="true" />
         </button>
       )}
 
@@ -159,28 +160,30 @@ export const Chatbot = () => {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
-                  <Bot className="text-emerald-400" size={20} />
+                  <Bot className="text-emerald-400" size={20} aria-hidden="true" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-white text-sm">AI Medical Triage</h3>
-                  <p className="text-xs text-emerald-300">Powered by Groq</p>
+                  <p className="text-xs text-emerald-300 font-mono-tech">Powered by Groq</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                aria-label="Close Assistant"
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500"
               >
-                <X size={20} />
+                <X size={20} aria-hidden="true" />
               </button>
             </div>
             
             {/* Language Selector */}
             <div className="flex items-center gap-2 bg-black/40 p-2 rounded-xl border border-white/5">
-              <Globe className="text-gray-400 w-4 h-4 ml-1" />
+              <Globe className="text-gray-400 w-4 h-4 ml-1" aria-hidden="true" />
               <select 
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
-                className="flex-1 bg-transparent text-sm text-gray-200 focus:outline-none appearance-none"
+                aria-label="Select Language"
+                className="flex-1 bg-transparent text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 rounded-md appearance-none"
               >
                 {LANGUAGES.map(lang => (
                   <option key={lang.code} value={lang.code} className="bg-slate-800">{lang.label}</option>
@@ -199,10 +202,11 @@ export const Chatbot = () => {
                 {msg.sender === 'bot' && (
                   <button 
                     onClick={() => speakText(msg.text)} 
-                    className="mr-2 self-end mb-1 p-1.5 rounded-full bg-slate-800 text-slate-400 hover:text-emerald-400 hover:bg-slate-700 transition-colors"
+                    aria-label="Read text aloud"
+                    className="mr-2 self-end mb-1 p-1.5 rounded-full bg-slate-800 text-slate-400 hover:text-emerald-400 hover:bg-slate-700 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500"
                     title="Read Aloud"
                   >
-                    <Volume2 size={14} />
+                    <Volume2 size={14} aria-hidden="true" />
                   </button>
                 )}
                 <div
@@ -219,8 +223,8 @@ export const Chatbot = () => {
             {loading && (
               <div className="flex justify-start">
                 <div className="bg-slate-800 border border-white/5 rounded-2xl rounded-bl-sm p-3 flex items-center space-x-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
-                  <span className="text-xs text-gray-400">Translating & Thinking...</span>
+                  <Loader2 className="w-4 h-4 animate-spin text-emerald-400" aria-hidden="true" />
+                  <span className="text-xs text-gray-400">Translating & Thinking…</span>
                 </div>
               </div>
             )}
@@ -232,10 +236,11 @@ export const Chatbot = () => {
             <div className="flex items-center gap-2">
               <button
                 onClick={startListening}
-                className={`p-3 rounded-xl transition-all flex items-center justify-center shrink-0 ${isListening ? 'bg-red-500/20 text-red-400 border border-red-500/50 animate-pulse' : 'bg-slate-800 text-slate-300 border border-white/5 hover:bg-slate-700'}`}
+                aria-label={isListening ? 'Stop listening' : 'Start voice input'}
+                className={`p-3 rounded-xl transition-all flex items-center justify-center shrink-0 focus-visible:ring-2 focus-visible:ring-emerald-500 ${isListening ? 'bg-red-500/20 text-red-400 border border-red-500/50 animate-pulse' : 'bg-slate-800 text-slate-300 border border-white/5 hover:bg-slate-700'}`}
                 title="Speak"
               >
-                <Mic size={18} />
+                <Mic size={18} aria-hidden="true" />
               </button>
               
               <input
@@ -243,16 +248,18 @@ export const Chatbot = () => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Type your symptoms..."
-                className="flex-1 bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition-all"
+                placeholder="Type your symptoms…"
+                aria-label="Symptom text input"
+                className="flex-1 bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all"
               />
               
               <button
                 onClick={() => handleSend()}
                 disabled={!input.trim() || loading}
-                className="p-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50 transition-all flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.2)]"
+                aria-label="Send message"
+                className="p-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-400 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.2)]"
               >
-                <Send size={18} />
+                <Send size={18} aria-hidden="true" />
               </button>
             </div>
           </div>

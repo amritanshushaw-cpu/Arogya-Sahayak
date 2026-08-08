@@ -103,42 +103,42 @@ export default function TeleconsultPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-slate-900 text-white font-sans">
+    <div className="flex flex-col h-screen bg-slate-950 text-white font-sans mesh-backdrop">
       {/* Header */}
-      <header className="p-4 flex items-center justify-between bg-slate-800 shadow-md z-10">
+      <header className="p-4 flex items-center justify-between bg-slate-900/90 backdrop-blur-md border-b border-slate-800 shadow-md z-10">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="p-2 bg-slate-700 rounded-full hover:bg-slate-600 transition-colors">
-            <ArrowLeft size={20} />
+          <Link href="/dashboard" aria-label="Back to Dashboard" className="p-2 bg-slate-800 rounded-full hover:bg-slate-700 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500">
+            <ArrowLeft size={20} aria-hidden="true" />
           </Link>
           <div>
             <h1 className="text-xl font-bold">Teleconsultation</h1>
-            <p className="text-xs text-slate-400">Dr. Sharma • Apollo Hospital</p>
+            <p className="text-xs text-slate-400 font-mono-tech">Dr. Sharma • Apollo Hospital</p>
           </div>
         </div>
-        <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${networkDrop ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}`}>
-          {networkDrop ? <WifiOff size={16} /> : <Wifi size={16} />}
-          {networkDrop ? 'Poor Network - Audio Only' : 'Good Network - HD Video'}
+        <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold font-mono-tech ${networkDrop ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
+          {networkDrop ? <WifiOff size={16} aria-hidden="true" /> : <Wifi size={16} aria-hidden="true" />}
+          <span>{networkDrop ? 'Poor Network - Audio Only' : 'Good Network - HD Video'}</span>
         </div>
       </header>
 
       {/* Video Area */}
       <div className="flex-1 relative bg-black flex items-center justify-center overflow-hidden">
         {/* Remote Video (Doctor) */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-800">
-          <div className="w-24 h-24 bg-slate-700 rounded-full flex items-center justify-center text-4xl mb-4 border-4 border-slate-600">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900">
+          <div className="w-24 h-24 bg-slate-800 rounded-full flex items-center justify-center text-4xl mb-4 border-4 border-slate-700">
             👨‍⚕️
           </div>
-          <p className="text-lg text-slate-300 animate-pulse">Waiting for Doctor to join...</p>
+          <p className="text-lg text-slate-300">Waiting for Doctor to join…</p>
         </div>
 
         {/* Local Video (ASHA/Patient) */}
-        <div className={`absolute bottom-6 right-6 w-32 h-48 md:w-48 md:h-64 bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border-2 ${networkDrop ? 'border-red-500/50' : 'border-slate-700'} transition-all duration-300 z-10`}>
+        <div className={`absolute bottom-6 right-6 w-32 h-48 md:w-48 md:h-64 bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border-2 ${networkDrop ? 'border-rose-500/50' : 'border-slate-700'} transition-all duration-300 z-10`}>
           {(isVideoOff || networkDrop) ? (
             <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800 text-slate-400">
               <div className="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center mb-2">
                 👤
               </div>
-              <span className="text-xs">You</span>
+              <span className="text-xs font-mono-tech">You</span>
             </div>
           ) : (
             <video
@@ -153,37 +153,41 @@ export default function TeleconsultPage() {
       </div>
 
       {/* Controls */}
-      <div className="bg-slate-900 p-6 flex flex-col items-center justify-center gap-4 pb-8">
+      <div className="bg-slate-950 p-6 flex flex-col items-center justify-center gap-4 pb-8 border-t border-slate-800/80">
         {errorMessage && (
-          <p className="text-sm text-red-400 text-center max-w-md">{errorMessage}</p>
+          <p className="text-sm text-rose-400 text-center max-w-md">{errorMessage}</p>
         )}
         <div className="flex gap-4">
           <button 
             onClick={toggleAudio}
-            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${isAudioMuted ? 'bg-red-500 hover:bg-red-600' : 'bg-slate-700 hover:bg-slate-600'}`}
+            aria-label={isAudioMuted ? "Unmute Microphone" : "Mute Microphone"}
+            className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors focus-visible:ring-2 focus-visible:ring-indigo-400 ${isAudioMuted ? 'bg-rose-600 hover:bg-rose-500' : 'bg-slate-800 hover:bg-slate-700'}`}
           >
-            {isAudioMuted ? <MicOff size={24} /> : <Mic size={24} />}
+            {isAudioMuted ? <MicOff size={24} aria-hidden="true" /> : <Mic size={24} aria-hidden="true" />}
           </button>
           
           <button 
             onClick={toggleVideo}
             disabled={networkDrop}
-            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${isVideoOff || networkDrop ? 'bg-red-500 hover:bg-red-600 opacity-80' : 'bg-slate-700 hover:bg-slate-600'}`}
+            aria-label={isVideoOff ? "Turn Video On" : "Turn Video Off"}
+            className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors focus-visible:ring-2 focus-visible:ring-indigo-400 ${isVideoOff || networkDrop ? 'bg-rose-600 hover:bg-rose-500 opacity-80' : 'bg-slate-800 hover:bg-slate-700'}`}
           >
-            {isVideoOff || networkDrop ? <VideoOff size={24} /> : <Video size={24} />}
+            {isVideoOff || networkDrop ? <VideoOff size={24} aria-hidden="true" /> : <Video size={24} aria-hidden="true" />}
           </button>
 
           <button 
             onClick={endCall}
-            className="w-14 h-14 rounded-full flex items-center justify-center bg-red-600 hover:bg-red-700 transition-all shadow-[0_0_15px_rgba(220,38,38,0.5)]"
+            aria-label="End Teleconsultation Call"
+            className="w-14 h-14 rounded-full flex items-center justify-center bg-rose-600 hover:bg-rose-500 transition-colors shadow-[0_0_15px_rgba(225,29,72,0.5)] focus-visible:ring-2 focus-visible:ring-rose-400"
           >
-            <PhoneOff size={24} />
+            <PhoneOff size={24} aria-hidden="true" />
           </button>
         </div>
         
         <button 
           onClick={simulateNetworkDrop}
-          className="text-xs text-slate-400 underline hover:text-slate-200 mt-2"
+          aria-label="Toggle Simulated Network Drop"
+          className="text-xs text-slate-400 underline hover:text-slate-200 mt-2 font-mono-tech focus-visible:ring-2 focus-visible:ring-indigo-500 rounded px-1"
         >
           {networkDrop ? "Restore Network" : "Simulate Network Drop"}
         </button>

@@ -190,17 +190,17 @@ function ScreeningContent() {
 
               <div className="grid grid-cols-2 gap-4">
                  <div className="space-y-1">
-                  <label className="block text-xs font-medium text-slate-400">Pulse / नाड़ी</label>
+                  <label htmlFor="pulse-input" className="block text-xs font-medium text-slate-400">Pulse / नाड़ी</label>
                   <div className="relative">
-                    <input type="number" name="pulse" value={formData.pulse} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-3 py-3 text-lg focus:border-primary transition-all" placeholder="72" />
-                    <span className="absolute right-3 top-3.5 text-xs text-slate-500">bpm</span>
+                    <input id="pulse-input" type="number" name="pulse" value={formData.pulse} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-3 py-3 text-lg font-mono-tech focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors" placeholder="72" />
+                    <span className="absolute right-3 top-3.5 text-xs text-slate-500 font-mono-tech">bpm</span>
                   </div>
                 </div>
                  <div className="space-y-1">
-                  <label className="block text-xs font-medium text-slate-400">SpO2 / ऑक्सीजन</label>
+                  <label htmlFor="spo2-input" className="block text-xs font-medium text-slate-400">SpO2 / ऑक्सीजन</label>
                   <div className="relative">
-                    <input type="number" name="spO2" value={formData.spO2} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-3 py-3 text-lg focus:border-primary transition-all" placeholder="98" />
-                    <span className="absolute right-3 top-3.5 text-xs text-slate-500">%</span>
+                    <input id="spo2-input" type="number" name="spO2" value={formData.spO2} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-3 py-3 text-lg font-mono-tech focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors" placeholder="98" />
+                    <span className="absolute right-3 top-3.5 text-xs text-slate-500 font-mono-tech">%</span>
                   </div>
                 </div>
               </div>
@@ -210,17 +210,17 @@ function ScreeningContent() {
             <div className="glass-panel p-5 rounded-2xl border border-slate-800">
                <div className="grid grid-cols-2 gap-4">
                  <div className="space-y-1">
-                  <label className="block text-xs font-medium text-slate-400">Blood Glucose<br/>रक्त शर्करा</label>
+                  <label htmlFor="glucose-input" className="block text-xs font-medium text-slate-400">Blood Glucose<br/>रक्त शर्करा</label>
                   <div className="relative">
-                    <input type="number" name="bloodGlucose" value={formData.bloodGlucose} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-3 py-3 text-lg focus:border-primary transition-all" placeholder="100" />
-                    <span className="absolute right-3 top-3.5 text-xs text-slate-500">mg/dL</span>
+                    <input id="glucose-input" type="number" name="bloodGlucose" value={formData.bloodGlucose} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-3 py-3 text-lg font-mono-tech focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors" placeholder="100" />
+                    <span className="absolute right-3 top-3.5 text-xs text-slate-500 font-mono-tech">mg/dL</span>
                   </div>
                 </div>
                  <div className="space-y-1">
-                  <label className="block text-xs font-medium text-slate-400">Hb Level<br/>हीमोग्लोबिन</label>
+                  <label htmlFor="hb-input" className="block text-xs font-medium text-slate-400">Hb Level<br/>हीमोग्लोबिन</label>
                   <div className="relative">
-                    <input type="number" name="hemoglobin" value={formData.hemoglobin} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-3 py-3 text-lg focus:border-primary transition-all" placeholder="12" />
-                    <span className="absolute right-3 top-3.5 text-xs text-slate-500">g/dL</span>
+                    <input id="hb-input" type="number" name="hemoglobin" value={formData.hemoglobin} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-3 py-3 text-lg font-mono-tech focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors" placeholder="12" />
+                    <span className="absolute right-3 top-3.5 text-xs text-slate-500 font-mono-tech">g/dL</span>
                   </div>
                 </div>
               </div>
@@ -230,17 +230,17 @@ function ScreeningContent() {
             <div className="glass-panel p-5 rounded-2xl border border-slate-800">
                <div className="grid grid-cols-2 gap-4">
                  <div className="space-y-1">
-                  <label className="block text-xs font-medium text-slate-400">Height / ऊंचाई</label>
+                  <label htmlFor="height-input" className="block text-xs font-medium text-slate-400">Height / ऊंचाई</label>
                   <div className="relative">
-                    <input type="number" name="height" value={formData.height} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-3 py-3 text-lg focus:border-primary transition-all" placeholder="160" />
-                    <span className="absolute right-3 top-3.5 text-xs text-slate-500">cm</span>
+                    <input id="height-input" type="number" name="height" value={formData.height} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-3 py-3 text-lg font-mono-tech focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors" placeholder="160" />
+                    <span className="absolute right-3 top-3.5 text-xs text-slate-500 font-mono-tech">cm</span>
                   </div>
                 </div>
                  <div className="space-y-1">
-                  <label className="block text-xs font-medium text-slate-400">Weight / वज़न</label>
+                  <label htmlFor="weight-input" className="block text-xs font-medium text-slate-400">Weight / वज़न</label>
                   <div className="relative">
-                    <input type="number" name="weight" value={formData.weight} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-3 py-3 text-lg focus:border-primary transition-all" placeholder="60" />
-                    <span className="absolute right-3 top-3.5 text-xs text-slate-500">kg</span>
+                    <input id="weight-input" type="number" name="weight" value={formData.weight} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-3 py-3 text-lg font-mono-tech focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors" placeholder="60" />
+                    <span className="absolute right-3 top-3.5 text-xs text-slate-500 font-mono-tech">kg</span>
                   </div>
                 </div>
               </div>
@@ -248,10 +248,10 @@ function ScreeningContent() {
 
             <button 
               type="submit"
-              className="w-full bg-gradient-to-r from-primary to-blue-600 hover:opacity-90 text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 mt-4 shadow-lg shadow-primary/25"
+              className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 mt-4 shadow-lg shadow-indigo-500/25 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-400"
             >
-              <Save size={20} />
-              Submit Screening / सबमिट करें
+              <Save size={20} aria-hidden="true" />
+              <span>Submit Screening / सबमिट करें</span>
             </button>
           </form>
         </>

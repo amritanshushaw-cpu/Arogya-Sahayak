@@ -82,7 +82,7 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-8 font-sans selection:bg-emerald-500/30">
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-8 font-sans selection:bg-emerald-500/30 mesh-backdrop">
       <div className="max-w-7xl mx-auto space-y-8">
         
         {/* Header */}
@@ -93,23 +93,23 @@ export default function AdminDashboard() {
             </h1>
             <p className="text-slate-400 mt-2">Monitor global healthcare operations, workforce, and patient metrics.</p>
           </div>
-          <div className="flex items-center gap-3 bg-white/5 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10">
-            <Activity className="w-5 h-5 text-emerald-400 animate-pulse" />
+          <div className="flex items-center gap-3 bg-white/5 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 font-mono-tech">
+            <Activity className="w-5 h-5 text-emerald-400 animate-pulse" aria-hidden="true" />
             <span className="text-sm font-medium tracking-wide">SYSTEM ONLINE</span>
           </div>
         </header>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl flex items-center gap-3">
-            <AlertCircle className="w-5 h-5" />
+          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-xl flex items-center gap-3">
+            <AlertCircle className="w-5 h-5" aria-hidden="true" />
             <p>{error}</p>
           </div>
         )}
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-4">
-            <Loader2 className="w-10 h-10 text-emerald-400 animate-spin" />
-            <p className="text-slate-400 animate-pulse">Synchronizing Data...</p>
+            <Loader2 className="w-10 h-10 text-emerald-400 animate-spin" aria-hidden="true" />
+            <p className="text-slate-400 font-mono-tech">Synchronizing Data…</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -118,14 +118,14 @@ export default function AdminDashboard() {
             <section className="lg:col-span-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-3 bg-emerald-500/20 rounded-lg">
-                  <HeartPulse className="w-6 h-6 text-emerald-400" />
+                  <HeartPulse className="w-6 h-6 text-emerald-400" aria-hidden="true" />
                 </div>
                 <h2 className="text-xl font-semibold">Active Patients</h2>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-white/10 text-slate-400 text-sm">
+                    <tr className="border-b border-white/10 text-slate-400 text-sm font-mono-tech">
                       <th className="pb-3 px-4 font-medium">Patient</th>
                       <th className="pb-3 px-4 font-medium">Age/Gender</th>
                       <th className="pb-3 px-4 font-medium">Status</th>
@@ -135,18 +135,18 @@ export default function AdminDashboard() {
                   <tbody className="text-sm divide-y divide-white/5">
                     {patients.map((p) => (
                       <tr key={p.id} className="hover:bg-white/5 transition-colors">
-                        <td className="py-4 px-4 font-medium text-slate-200">{p.name} <span className="text-xs text-slate-500 block">{p.id}</span></td>
-                        <td className="py-4 px-4 text-slate-400">{p.age} / {p.gender}</td>
+                        <td className="py-4 px-4 font-medium text-slate-200">{p.name} <span className="text-xs text-slate-500 block font-mono-tech">{p.id}</span></td>
+                        <td className="py-4 px-4 text-slate-400 font-mono-tech tabular-nums">{p.age} / {p.gender}</td>
                         <td className="py-4 px-4">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium border ${
-                            p.status === 'Critical' ? 'bg-red-500/10 border-red-500/20 text-red-400' : 
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium border font-mono-tech ${
+                            p.status === 'Critical' ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' : 
                             p.status === 'Stable' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
                             'bg-amber-500/10 border-amber-500/20 text-amber-400'
                           }`}>
                             {p.status}
                           </span>
                         </td>
-                        <td className="py-4 px-4 text-slate-400">{p.lastVisit}</td>
+                        <td className="py-4 px-4 text-slate-400 font-mono-tech tabular-nums">{p.lastVisit}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -160,19 +160,19 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
                     <div className="p-3 bg-cyan-500/20 rounded-lg">
-                      <UserPlus className="w-6 h-6 text-cyan-400" />
+                      <UserPlus className="w-6 h-6 text-cyan-400" aria-hidden="true" />
                     </div>
                     <h2 className="text-xl font-semibold">ASHA Workers</h2>
                   </div>
-                  <span className="text-xs font-medium bg-cyan-500/20 text-cyan-300 px-2 py-1 rounded-full">{ashaWorkers.length} Active</span>
+                  <span className="text-xs font-medium bg-cyan-500/20 text-cyan-300 px-2 py-1 rounded-full font-mono-tech tabular-nums">{ashaWorkers.length} Active</span>
                 </div>
                 <div className="space-y-4">
                   {ashaWorkers.map((w) => (
-                    <div key={w.id} className="p-4 bg-white/5 border border-white/5 rounded-xl hover:border-cyan-500/30 transition-all">
+                    <div key={w.id} className="p-4 bg-white/5 border border-white/5 rounded-xl hover:border-cyan-500/30 transition-colors">
                       <h3 className="font-medium text-slate-200">{w.name}</h3>
                       <div className="flex justify-between items-center mt-2 text-sm text-slate-400">
                         <span>{w.assignedVillage}</span>
-                        <span className="flex items-center gap-1 text-cyan-400"><Users className="w-3 h-3"/> {w.activeCases} Cases</span>
+                        <span className="flex items-center gap-1 text-cyan-400 font-mono-tech tabular-nums"><Users className="w-3 h-3" aria-hidden="true" /> {w.activeCases} Cases</span>
                       </div>
                     </div>
                   ))}
@@ -183,16 +183,16 @@ export default function AdminDashboard() {
               <section className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-3 bg-indigo-500/20 rounded-lg">
-                    <Hospital className="w-6 h-6 text-indigo-400" />
+                    <Hospital className="w-6 h-6 text-indigo-400" aria-hidden="true" />
                   </div>
                   <h2 className="text-xl font-semibold">PHC Network</h2>
                 </div>
                 <div className="space-y-4">
                   {phcs.map((h) => (
-                    <div key={h.id} className="p-4 bg-white/5 border border-white/5 rounded-xl hover:border-indigo-500/30 transition-all">
+                    <div key={h.id} className="p-4 bg-white/5 border border-white/5 rounded-xl hover:border-indigo-500/30 transition-colors">
                       <div className="flex justify-between items-start mb-2">
                         <h3 className="font-medium text-slate-200">{h.name}</h3>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-mono-tech ${
                           h.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
                         }`}>
                           {h.status}
@@ -200,7 +200,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="text-sm text-slate-400 flex justify-between">
                         <span>{h.location}</span>
-                        <span>Cap: {h.capacity}</span>
+                        <span className="font-mono-tech tabular-nums">Cap: {h.capacity}</span>
                       </div>
                     </div>
                   ))}

@@ -89,11 +89,11 @@ function LoginForm() {
   ];
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md p-8 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl">
+    <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4 mesh-backdrop">
+      <div className="w-full max-w-md p-8 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-2xl">
         <div className="flex justify-center mb-6">
           <div className="h-12 w-12 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-            <HeartPulse className="h-6 w-6 text-emerald-400" />
+            <HeartPulse className="h-6 w-6 text-emerald-400" aria-hidden="true" />
           </div>
         </div>
         <h2 className="text-2xl font-semibold text-center mb-2">Welcome Back</h2>
@@ -101,43 +101,51 @@ function LoginForm() {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="mb-6 flex flex-col">
-            <label className="text-sm font-medium text-gray-300 mb-2">Language Preference</label>
+            <label htmlFor="login-lang" className="text-sm font-medium text-gray-300 mb-2">Language Preference</label>
             <select
+              id="login-lang"
+              name="language"
               value={language || 'en-US'}
               onChange={(e) => setLanguage(e.target.value)}
-              className="w-full bg-black/50 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-transparent transition-all"
+              className="w-full bg-black/50 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
             >
               {LANGUAGES.map(l => (
-                <option key={l.code} value={l.code}>{l.name}</option>
+                <option key={l.code} value={l.code} className="bg-slate-900">{l.name}</option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Role</label>
+            <label htmlFor="login-role" className="block text-sm font-medium text-gray-300 mb-1">Role</label>
             <select
+              id="login-role"
+              name="role"
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="w-full bg-black/50 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-transparent transition-all appearance-none"
+              className="w-full bg-black/50 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors appearance-none"
             >
-              <option value="patient">Patient</option>
-              <option value="asha">ASHA Worker</option>
-              <option value="phc">PHC Center</option>
-              <option value="admin">Admin</option>
+              <option value="patient" className="bg-slate-900">Patient</option>
+              <option value="asha" className="bg-slate-900">ASHA Worker</option>
+              <option value="phc" className="bg-slate-900">PHC Center</option>
+              <option value="admin" className="bg-slate-900">Admin</option>
             </select>
           </div>
 
           {role !== 'admin' && (
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Phone Number</label>
+              <label htmlFor="login-phone" className="block text-sm font-medium text-gray-300 mb-1">Phone Number</label>
               <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" aria-hidden="true" />
                 <input 
+                  id="login-phone"
+                  name="phone"
                   type="tel"
+                  autoComplete="tel"
+                  spellCheck={false}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   required
-                  className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-transparent transition-all"
+                  className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors font-mono-tech"
                   placeholder="9876543210"
                 />
               </div>
@@ -145,15 +153,18 @@ function LoginForm() {
           )}
           
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
+            <label htmlFor="login-password" className="block text-sm font-medium text-gray-300 mb-1">Password</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" aria-hidden="true" />
               <input 
-                type="password" 
+                id="login-password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-transparent transition-all"
+                className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
                 placeholder="••••••••"
               />
             </div>
@@ -162,15 +173,22 @@ function LoginForm() {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-medium py-3 rounded-xl transition-all shadow-[0_0_15px_rgba(16,185,129,0.4)] flex justify-center items-center mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-medium py-3 rounded-xl transition-colors shadow-[0_0_15px_rgba(16,185,129,0.4)] flex justify-center items-center gap-2 mt-2 focus-visible:ring-2 focus-visible:ring-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Sign In'}
+            {loading ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                <span>Signing In…</span>
+              </>
+            ) : (
+              'Sign In'
+            )}
           </button>
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-400">
           Don't have an account?{' '}
-          <Link href="/auth/register" className="text-emerald-400 hover:text-emerald-300 transition-colors">
+          <Link href="/auth/register" className="text-emerald-400 hover:text-emerald-300 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 rounded px-1">
             Sign up
           </Link>
         </div>
@@ -181,7 +199,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center text-emerald-500"><Loader2 className="w-8 h-8 animate-spin" /></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center text-emerald-500"><Loader2 className="w-8 h-8 animate-spin" aria-hidden="true" /></div>}>
       <LoginForm />
     </Suspense>
   );

@@ -22,8 +22,11 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body className="bg-slate-950 text-white min-h-screen antialiased selection:bg-indigo-500 selection:text-white">
+        <a href="#main-content" className="skip-to-content">
+          Skip to main content
+        </a>
         <NetworkSyncProvider>
-          {children}
+          <div id="main-content">{children}</div>
           <Chatbot />
         </NetworkSyncProvider>
         <Toaster

@@ -600,16 +600,16 @@ export default function HomePage() {
   }, [language]);
 
   return (
-    <div className="relative min-h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none -translate-y-1/2" />
-      <div className="absolute top-1/3 right-10 w-96 h-96 bg-emerald-600/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 left-10 w-[500px] h-[500px] bg-violet-600/15 rounded-full blur-3xl pointer-events-none" />
+    <div className="relative min-h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans mesh-backdrop">
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none -translate-y-1/2" aria-hidden="true" />
+      <div className="absolute top-1/3 right-10 w-96 h-96 bg-emerald-600/15 rounded-full blur-3xl pointer-events-none" aria-hidden="true" />
+      <div className="absolute bottom-10 left-10 w-[500px] h-[500px] bg-violet-600/15 rounded-full blur-3xl pointer-events-none" aria-hidden="true" />
 
       <header className="sticky top-0 z-50 glass border-b border-slate-800/80 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-              <HeartPulse className="w-6 h-6 text-white" />
+              <HeartPulse className="w-6 h-6 text-white" aria-hidden="true" />
             </div>
             <div>
               <span className="text-xl font-bold bg-gradient-to-r from-white via-indigo-200 to-indigo-400 bg-clip-text text-transparent">
@@ -622,34 +622,35 @@ export default function HomePage() {
           </div>
 
           <nav className="hidden md:flex items-center space-x-6 text-sm font-medium text-slate-300">
-            <Link href="/screening" className="hover:text-indigo-400 transition-colors">
+            <Link href="/screening" className="hover:text-indigo-400 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none rounded-md px-2 py-1">
               {copy.nav[0]}
             </Link>
-            <Link href="/dashboard" className="hover:text-indigo-400 transition-colors">
+            <Link href="/dashboard" className="hover:text-indigo-400 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none rounded-md px-2 py-1">
               {copy.nav[1]}
             </Link>
-            <Link href="/teleconsult" className="hover:text-indigo-400 transition-colors">
+            <Link href="/teleconsult" className="hover:text-indigo-400 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none rounded-md px-2 py-1">
               {copy.nav[2]}
             </Link>
           </nav>
           <div className="flex items-center space-x-4">
             <div className="hidden sm:flex items-center space-x-2 bg-slate-800/50 rounded-full px-3 py-1.5 border border-slate-700/50">
-              <Globe className="w-4 h-4 text-slate-400" />
+              <Globe className="w-4 h-4 text-slate-400" aria-hidden="true" />
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
-                className="bg-transparent text-sm text-slate-200 focus:outline-none appearance-none cursor-pointer"
+                aria-label="Select Interface Language"
+                className="bg-transparent text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded appearance-none cursor-pointer"
               >
                 {LANGUAGES.map(l => (
                   <option key={l.code} value={l.code} className="bg-slate-900 text-slate-200">{l.name}</option>
                 ))}
               </select>
             </div>
-            <Link href="/auth/login" className="text-sm font-medium text-indigo-400 hover:text-indigo-300">
+            <Link href="/auth/login" className="text-sm font-medium text-indigo-400 hover:text-indigo-300 focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-md px-2 py-1">
               {copy.signIn}
             </Link>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <WifiOff className="w-3.5 h-3.5" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono-tech">
+              <WifiOff className="w-3.5 h-3.5" aria-hidden="true" />
               {copy.status}
             </span>
           </div>
@@ -658,12 +659,12 @@ export default function HomePage() {
 
       <main className="max-w-7xl mx-auto px-6 pt-12 pb-24 relative z-10">
         <section className="text-center py-12 md:py-20 max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-sm font-medium mb-8 backdrop-blur-md animate-fade-in">
-            <BrainCircuit className="w-4 h-4 text-indigo-400" />
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-sm font-medium mb-8 backdrop-blur-md font-mono-tech">
+            <BrainCircuit className="w-4 h-4 text-indigo-400" aria-hidden="true" />
             {copy.badge}
           </div>
 
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white mb-6">
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white mb-6 leading-tight">
             {copy.heroTitleLine1} <br />
             <span className="text-3xl sm:text-5xl font-semibold bg-gradient-to-r from-indigo-400 via-violet-300 to-emerald-400 bg-clip-text text-transparent font-sans">
               {copy.heroTitleLine2}
@@ -681,40 +682,40 @@ export default function HomePage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
             <Link
               href="/auth/login?role=patient"
-              className="group relative flex flex-col items-center justify-center gap-3 px-6 py-8 rounded-2xl glass-card border border-indigo-500/20 hover:border-indigo-500/60 transition-all duration-300 hover:-translate-y-1 hover:bg-indigo-500/10 hover:shadow-[0_0_20px_rgba(99,102,241,0.2)]"
+              className="group relative flex flex-col items-center justify-center gap-3 px-6 py-8 rounded-2xl glass-card border border-indigo-500/20 hover:border-indigo-500/60 transition-colors transition-transform duration-200 hover:-translate-y-1 hover:bg-indigo-500/10 hover:shadow-[0_0_20px_rgba(99,102,241,0.2)] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
             >
-              <div className="w-14 h-14 rounded-full bg-indigo-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Users className="w-7 h-7 text-indigo-400" />
+              <div className="w-14 h-14 rounded-full bg-indigo-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <Users className="w-7 h-7 text-indigo-400" aria-hidden="true" />
               </div>
               <span className="font-semibold text-lg text-white">Patient Mode</span>
             </Link>
 
             <Link
               href="/auth/login?role=asha"
-              className="group relative flex flex-col items-center justify-center gap-3 px-6 py-8 rounded-2xl glass-card border border-emerald-500/20 hover:border-emerald-500/60 transition-all duration-300 hover:-translate-y-1 hover:bg-emerald-500/10 hover:shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+              className="group relative flex flex-col items-center justify-center gap-3 px-6 py-8 rounded-2xl glass-card border border-emerald-500/20 hover:border-emerald-500/60 transition-colors transition-transform duration-200 hover:-translate-y-1 hover:bg-emerald-500/10 hover:shadow-[0_0_20px_rgba(16,185,129,0.2)] focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
             >
-              <div className="w-14 h-14 rounded-full bg-emerald-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <HeartPulse className="w-7 h-7 text-emerald-400" />
+              <div className="w-14 h-14 rounded-full bg-emerald-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <HeartPulse className="w-7 h-7 text-emerald-400" aria-hidden="true" />
               </div>
               <span className="font-semibold text-lg text-white">ASHA Worker</span>
             </Link>
 
             <Link
               href="/auth/login?role=phc"
-              className="group relative flex flex-col items-center justify-center gap-3 px-6 py-8 rounded-2xl glass-card border border-amber-500/20 hover:border-amber-500/60 transition-all duration-300 hover:-translate-y-1 hover:bg-amber-500/10 hover:shadow-[0_0_20px_rgba(245,158,11,0.2)]"
+              className="group relative flex flex-col items-center justify-center gap-3 px-6 py-8 rounded-2xl glass-card border border-amber-500/20 hover:border-amber-500/60 transition-colors transition-transform duration-200 hover:-translate-y-1 hover:bg-amber-500/10 hover:shadow-[0_0_20px_rgba(245,158,11,0.2)] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
             >
-              <div className="w-14 h-14 rounded-full bg-amber-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Hospital className="w-7 h-7 text-amber-400" />
+              <div className="w-14 h-14 rounded-full bg-amber-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <Hospital className="w-7 h-7 text-amber-400" aria-hidden="true" />
               </div>
               <span className="font-semibold text-lg text-white">PHC Center</span>
             </Link>
 
             <Link
               href="/auth/login?role=admin"
-              className="group relative flex flex-col items-center justify-center gap-3 px-6 py-8 rounded-2xl glass-card border border-rose-500/20 hover:border-rose-500/60 transition-all duration-300 hover:-translate-y-1 hover:bg-rose-500/10 hover:shadow-[0_0_20px_rgba(244,63,94,0.2)]"
+              className="group relative flex flex-col items-center justify-center gap-3 px-6 py-8 rounded-2xl glass-card border border-rose-500/20 hover:border-rose-500/60 transition-colors transition-transform duration-200 hover:-translate-y-1 hover:bg-rose-500/10 hover:shadow-[0_0_20px_rgba(244,63,94,0.2)] focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none"
             >
-              <div className="w-14 h-14 rounded-full bg-rose-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <ShieldCheck className="w-7 h-7 text-rose-400" />
+              <div className="w-14 h-14 rounded-full bg-rose-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <ShieldCheck className="w-7 h-7 text-rose-400" aria-hidden="true" />
               </div>
               <span className="font-semibold text-lg text-white">App Admin</span>
             </Link>
@@ -752,12 +753,12 @@ export default function HomePage() {
 
               return (
                 <div key={card.title} className="glass-card p-6 rounded-2xl relative overflow-hidden group">
-                  <div className={`w-12 h-12 rounded-xl ${cardStyles[index]} flex items-center justify-center mb-5 group-hover:bg-slate-900/70 transition-colors duration-300`}>
-                    <Icon className="w-6 h-6" />
+                  <div className={`w-12 h-12 rounded-xl ${cardStyles[index]} flex items-center justify-center mb-5 group-hover:bg-slate-900/70 transition-colors duration-200`}>
+                    <Icon className="w-6 h-6" aria-hidden="true" />
                   </div>
                   <h3 className="text-xl font-bold text-white mb-2">{card.title}</h3>
                   <p className="text-slate-400 text-sm leading-relaxed mb-4">{card.body}</p>
-                  <Link href={hrefs[index]} className={`inline-flex items-center text-xs font-semibold ${linkStyles[index]} group-hover:translate-x-1 transition-transform`}>
+                  <Link href={hrefs[index]} className={`inline-flex items-center text-xs font-semibold ${linkStyles[index]} group-hover:translate-x-1 transition-transform focus-visible:ring-2 focus-visible:ring-indigo-500 rounded px-1`}>
                     {card.linkText}
                   </Link>
                 </div>
@@ -781,10 +782,10 @@ export default function HomePage() {
               return (
                 <div key={item.value} className="p-4">
                   <div className={`inline-flex p-3 rounded-xl ${iconStyles[index]} mb-3`}>
-                    <Icon className="w-6 h-6" />
+                    <Icon className="w-6 h-6" aria-hidden="true" />
                   </div>
-                  <div className="text-2xl font-extrabold text-white">{item.value}</div>
-                  <div className="text-xs text-slate-400 mt-1">{item.detail}</div>
+                  <div className="text-2xl font-extrabold text-white font-mono-tech tabular-nums">{item.value}</div>
+                  <div className="text-xs text-slate-400 mt-1 font-mono-tech">{item.detail}</div>
                 </div>
               );
             })}
@@ -796,9 +797,9 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>{copy.footer}</div>
           <div className="flex items-center space-x-4 text-slate-400">
-            <Link href="/screening" className="hover:text-indigo-400">{copy.footerLinks[0]}</Link>
-            <Link href="/dashboard" className="hover:text-indigo-400">{copy.footerLinks[1]}</Link>
-            <Link href="/teleconsult" className="hover:text-indigo-400">{copy.footerLinks[2]}</Link>
+            <Link href="/screening" className="hover:text-indigo-400 focus-visible:ring-2 focus-visible:ring-indigo-500 rounded px-1">{copy.footerLinks[0]}</Link>
+            <Link href="/dashboard" className="hover:text-indigo-400 focus-visible:ring-2 focus-visible:ring-indigo-500 rounded px-1">{copy.footerLinks[1]}</Link>
+            <Link href="/teleconsult" className="hover:text-indigo-400 focus-visible:ring-2 focus-visible:ring-indigo-500 rounded px-1">{copy.footerLinks[2]}</Link>
           </div>
         </div>
       </footer>

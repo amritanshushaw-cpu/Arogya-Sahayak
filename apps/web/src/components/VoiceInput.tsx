@@ -89,14 +89,15 @@ export function VoiceInput({ onVitalsExtracted }: VoiceInputProps) {
     <button
       onClick={toggleListening}
       type="button"
-      className={`w-12 h-12 rounded-full flex items-center justify-center border shadow-lg transition-all z-20 relative ${
+      aria-label={isListening ? "Stop listening for vitals" : "Start voice input for vitals"}
+      className={`w-12 h-12 rounded-full flex items-center justify-center border shadow-lg transition-colors transition-transform z-20 relative focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none ${
         isListening 
-          ? 'bg-red-500/20 text-red-500 border-red-500/50 shadow-red-500/20 animate-pulse' 
-          : 'bg-primary/20 text-primary border-primary/30 shadow-primary/20 hover:bg-primary/30'
+          ? 'bg-red-500/20 text-red-400 border-red-500/50 shadow-red-500/20 animate-pulse' 
+          : 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30 shadow-indigo-500/20 hover:bg-indigo-500/30'
       }`}
-      title={isListening ? "Listening..." : "Tap to speak vitals"}
+      title={isListening ? "Listening…" : "Tap to speak vitals"}
     >
-      {isListening ? <MicOff size={24} /> : <Mic size={24} />}
+      {isListening ? <MicOff size={24} aria-hidden="true" /> : <Mic size={24} aria-hidden="true" />}
     </button>
   );
 }
