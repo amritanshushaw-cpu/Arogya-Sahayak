@@ -3,7 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
   async rewrites() {
-    const apiTarget = process.env.NEXT_PUBLIC_API_URL || 'https://schemegg.onrender.com';
+    const apiTarget = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
     return [
       {
@@ -13,7 +13,7 @@ const nextConfig = {
     ];
   },
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://schemegg.onrender.com',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
   },
 };
 module.exports = nextConfig;
