@@ -103,6 +103,14 @@ export default function HomePage() {
               <LayoutDashboard className="w-5 h-5 text-indigo-400" />
               Admin Dashboard
             </Link>
+            
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 px-7 py-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-semibold text-lg hover:bg-emerald-500/20 hover:text-white transition-all duration-300 active:scale-95"
+            >
+              <Users className="w-5 h-5 text-emerald-400" />
+              Judge / Guest Access
+            </Link>
           </div>
         </section>
 
