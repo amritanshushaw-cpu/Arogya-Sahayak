@@ -54,13 +54,22 @@ export default function NewPatientPage() {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      
+      const payload = {
+        name: formData.name,
+        age: Number(formData.age),
+        gender: formData.gender,
+        village: formData.location, // Store location as village for now
+        family_history: formData.familyHistory
+      };
+
       const res = await fetch(`${apiUrl}/api/patients`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
