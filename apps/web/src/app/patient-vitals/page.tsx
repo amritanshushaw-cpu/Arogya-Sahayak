@@ -22,6 +22,51 @@ const LANGUAGES = [
   { code: 'pa-IN', name: 'Punjabi (ਪੰਜਾਬੀ)' },
 ];
 
+const UI_TRANS: any = {
+  'en-US': { 
+    tab1: 'Basic Information', tab2: 'Vitals & Symptoms', tab3: 'Disease Detection', 
+    save: 'Save Information', analyze: 'Analyze Vitals',
+    header1: 'Patient Details & History', sub1: 'Please provide your details before recording vitals.',
+    age: 'Age', gender: 'Gender', male: 'Male', female: 'Female', other: 'Other',
+    location: 'Village / Location', locPlaceholder: 'Enter location or use auto-fetch',
+    getLocation: 'Get Location', locating: 'Locating...',
+    history: 'Family Disease History', historyPlaceholder: 'E.g. Diabetes, Hypertension in parents...',
+    saveAndContinue: 'Save Information & Continue',
+    header2: 'Patient Vitals', sub2: 'Record symptoms via audio to autofill parameters, or type manually.',
+    languageLabel: 'Audio & UI Language', recordPlaceholder: 'Speak to record your symptoms, or type here...',
+    record: 'Record', stop: 'Stop', autofill: 'Autofill Params',
+    sys: 'BP Systolic', dia: 'BP Diastolic', glucose: 'Glucose (mg/dL)', temp: 'Temp (°F)', pulse: 'Pulse (bpm)', spo2: 'SpO2 (%)', weight: 'Weight (kg)', height: 'Height (cm)',
+    analyzeBtn: 'Analyze Health Risk', header3: 'Disease Detection Results', sub3: 'AI analysis based on your info and vitals.',
+    listen: 'Listen to Result', analyzing: 'Analyzing Health Data', processing: 'Processing with ML models...', audioFailed: 'Audio playback failed.'
+  },
+  'hi-IN': { 
+    tab1: 'मूल जानकारी', tab2: 'वाइटल्स और लक्षण', tab3: 'रोग का पता लगाना', 
+    save: 'जानकारी सहेजें', analyze: 'वाइटल्स का विश्लेषण करें',
+    header1: 'मरीज का विवरण और इतिहास', sub1: 'कृपया वाइटल्स दर्ज करने से पहले अपना विवरण प्रदान करें।',
+    age: 'आयु', gender: 'लिंग', male: 'पुरुष', female: 'महिला', other: 'अन्य',
+    location: 'गाँव / स्थान', locPlaceholder: 'स्थान दर्ज करें',
+    getLocation: 'स्थान प्राप्त करें', locating: 'खोज रहा है...',
+    history: 'पारिवारिक बीमारी का इतिहास', historyPlaceholder: 'उदा. माता-पिता में मधुमेह...',
+    saveAndContinue: 'जानकारी सहेजें और आगे बढ़ें',
+    header2: 'मरीज के वाइटल्स', sub2: 'लक्षण रिकॉर्ड करने के लिए बोलें, या टाइप करें।',
+    languageLabel: 'भाषा', recordPlaceholder: 'अपने लक्षण रिकॉर्ड करने के लिए बोलें...',
+    record: 'रिकॉर्ड करें', stop: 'रोकें', autofill: 'स्वतः भरें',
+    sys: 'बीपी सिस्टोलिक', dia: 'बीपी डायस्टोलिक', glucose: 'ग्लूकोज (mg/dL)', temp: 'तापमान (°F)', pulse: 'पल्स (bpm)', spo2: 'SpO2 (%)', weight: 'वजन (kg)', height: 'ऊंचाई (cm)',
+    analyzeBtn: 'स्वास्थ्य जोखिम का विश्लेषण करें', header3: 'रोग पहचान परिणाम', sub3: 'एआई विश्लेषण।',
+    listen: 'परिणाम सुनें', analyzing: 'विश्लेषण कर रहा है', processing: 'एमएल मॉडल के साथ प्रसंस्करण...', audioFailed: 'ऑडियो विफल रहा।'
+  },
+  'bn-IN': { tab1: 'প্রাথমিক তথ্য', tab2: 'ভাইটালস ও লক্ষণ', tab3: 'রোগ সনাক্তকরণ', save: 'তথ্য সংরক্ষণ করুন', analyze: 'ভাইটালস বিশ্লেষণ করুন' },
+  'te-IN': { tab1: 'ప్రాథమిక సమాచారం', tab2: 'లక్షణాలు', tab3: 'వ్యాధి గుర్తింపు', save: 'సమాచారం భద్రపరుచు', analyze: 'విశ్లేషించండి' },
+  'mr-IN': { tab1: 'मूलभूत माहिती', tab2: 'लक्षणे', tab3: 'रोगनिदान', save: 'माहिती जतन करा', analyze: 'विश्लेषण करा' },
+  'ta-IN': { tab1: 'அடிப்படை தகவல்', tab2: 'அறிகுறிகள்', tab3: 'நோய் கண்டறிதல்', save: 'தகவலை சேமி', analyze: 'பகுப்பாய்வு செய்' },
+  'gu-IN': { tab1: 'મૂળભૂત માહિતી', tab2: 'લક્ષણો', tab3: 'રોગ નિદાન', save: 'માહિતી સાચવો', analyze: 'વિશ્લેષણ કરો' },
+  'ur-IN': { tab1: 'بنیادی معلومات', tab2: 'علامات', tab3: 'بیماری کی تشخیص', save: 'معلومات محفوظ کریں', analyze: 'تجزیہ کریں' },
+  'kn-IN': { tab1: 'ಮೂಲ ಮಾಹಿತಿ', tab2: 'ಲಕ್ಷಣಗಳು', tab3: 'ರೋಗ ಪತ್ತೆ', save: 'ಮಾಹಿತಿ ಉಳಿಸಿ', analyze: 'ವಿಶ್ಲೇಷಿಸಿ' },
+  'or-IN': { tab1: 'ମୌଳିକ ସୂଚନା', tab2: 'ଲକ୍ଷଣ', tab3: 'ରୋଗ ନିର୍ଣ୍ଣୟ', save: 'ସୂଚନା ସଂରକ୍ଷଣ କରନ୍ତୁ', analyze: 'ବିଶ୍ଳେଷଣ କରନ୍ତୁ' },
+  'ml-IN': { tab1: 'അടിസ്ഥാന വിവരങ്ങൾ', tab2: 'ലക്ഷണങ്ങൾ', tab3: 'രോഗ നിർണയം', save: 'വിവരങ്ങൾ സംരക്ഷിക്കുക', analyze: 'വിശകലനം ചെയ്യുക' },
+  'pa-IN': { tab1: 'ਮੁੱਢਲੀ ਜਾਣਕਾਰੀ', tab2: 'ਲੱਛਣ', tab3: 'ਬਿਮਾਰੀ ਦੀ ਪਛਾਣ', save: 'ਜਾਣਕਾਰੀ ਸੁਰੱਖਿਅਤ ਕਰੋ', analyze: 'ਵਿਸ਼ਲੇਸ਼ਣ ਕਰੋ' },
+};
+
 export default function PatientDashboard() {
   const { token, user, language, setLanguage } = useAuthStore();
   const [step, setStep] = useState<'info' | 'vitals' | 'detection'>('info');
@@ -317,23 +362,31 @@ ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healt
 
   const speakResult = () => {
     if (!analysisResult) return;
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      // Stop any ongoing speech
-      window.speechSynthesis.cancel();
+    try {
+      const targetLang = language.split('-')[0];
+      // Chunk text if it's too long (Google TTS has a ~200 char limit per request)
+      const textChunks = analysisResult.match(/.{1,150}(\s|$)/g) || [analysisResult];
       
-      const utterance = new SpeechSynthesisUtterance(analysisResult);
-      utterance.lang = language;
+      let currentChunk = 0;
+      const playNextChunk = () => {
+        if (currentChunk < textChunks.length) {
+          const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${targetLang}&client=tw-ob&q=${encodeURIComponent(textChunks[currentChunk])}`;
+          const audio = new Audio(url);
+          audio.onended = () => {
+            currentChunk++;
+            playNextChunk();
+          };
+          audio.play().catch(e => {
+            console.error("Audio play failed:", e);
+            toast.error(UI_TRANS[language]?.audioFailed || UI_TRANS['en-US'].audioFailed);
+          });
+        }
+      };
       
-      // Try to find a voice that matches the selected language
-      const voices = window.speechSynthesis.getVoices();
-      const matchVoice = voices.find(v => v.lang.startsWith(language.split('-')[0]));
-      if (matchVoice) {
-        utterance.voice = matchVoice;
-      }
-      
-      window.speechSynthesis.speak(utterance);
-    } else {
-      toast.error('Text-to-speech is not supported in this browser.');
+      playNextChunk();
+    } catch (e) {
+      console.error(e);
+      toast.error(UI_TRANS[language]?.audioFailed || UI_TRANS['en-US'].audioFailed);
     }
   };
 
@@ -349,23 +402,23 @@ ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healt
         <div className="flex bg-white/5 backdrop-blur-md rounded-2xl p-2 mb-6 border border-white/10 gap-2">
           <button 
             onClick={() => setStep('info')}
-            className={`flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-medium transition-all ${step === 'info' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+            className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all ${step === 'info' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
           >
-            <User className="w-4 h-4" /> Patient Info
+            1. {UI_TRANS[language]?.tab1 || UI_TRANS['en-US'].tab1}
           </button>
           <button 
             onClick={() => infoSaved && setStep('vitals')}
             disabled={!infoSaved}
-            className={`flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-medium transition-all ${step === 'vitals' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400'} ${!infoSaved ? 'opacity-50 cursor-not-allowed' : 'hover:text-white hover:bg-white/5'}`}
+            className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all ${step === 'vitals' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25' : infoSaved ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 cursor-not-allowed'}`}
           >
-            <HeartPulse className="w-4 h-4" /> Vitals
+            2. {UI_TRANS[language]?.tab2 || UI_TRANS['en-US'].tab2}
           </button>
           <button 
             onClick={() => (infoSaved && (transcript || vitalsForm.temperature)) && setStep('detection')}
             disabled={!infoSaved || (!transcript && !vitalsForm.temperature)}
-            className={`flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-medium transition-all ${step === 'detection' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400'} ${(!infoSaved || (!transcript && !vitalsForm.temperature)) ? 'opacity-50 cursor-not-allowed' : 'hover:text-white hover:bg-white/5'}`}
+            className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all ${step === 'detection' ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/25' : infoSaved && (transcript || vitalsForm.temperature) ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 cursor-not-allowed'}`}
           >
-            <Activity className="w-4 h-4" /> Detection
+            3. {UI_TRANS[language]?.tab3 || UI_TRANS['en-US'].tab3}
           </button>
         </div>
 
@@ -377,15 +430,15 @@ ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healt
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <header className="mb-8">
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                  <FileText className="w-6 h-6 text-blue-400" /> Patient Details & History
+                  <FileText className="w-6 h-6 text-blue-400" /> {UI_TRANS[language]?.header1 || UI_TRANS['en-US'].header1}
                 </h2>
-                <p className="text-slate-400">Please provide your details before recording vitals.</p>
+                <p className="text-slate-400">{UI_TRANS[language]?.sub1 || UI_TRANS['en-US'].sub1}</p>
               </header>
 
               <form onSubmit={handleInfoSubmit} className="space-y-4 max-w-2xl mx-auto">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm text-slate-400">Age</label>
+                    <label className="text-sm text-slate-400">{UI_TRANS[language]?.age || UI_TRANS['en-US'].age}</label>
                     <input 
                       type="number" 
                       required
@@ -395,21 +448,21 @@ ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healt
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm text-slate-400">Gender</label>
+                    <label className="text-sm text-slate-400">{UI_TRANS[language]?.gender || UI_TRANS['en-US'].gender}</label>
                     <select 
                       value={infoForm.gender}
                       onChange={e => setInfoForm({...infoForm, gender: e.target.value})}
                       className="w-full bg-slate-900 border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-blue-500"
                     >
-                      <option>Male</option>
-                      <option>Female</option>
-                      <option>Other</option>
+                      <option>{UI_TRANS[language]?.male || UI_TRANS['en-US'].male}</option>
+                      <option>{UI_TRANS[language]?.female || UI_TRANS['en-US'].female}</option>
+                      <option>{UI_TRANS[language]?.other || UI_TRANS['en-US'].other}</option>
                     </select>
                   </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-sm text-slate-400">Village / Location</label>
+                  <label className="text-sm text-slate-400">{UI_TRANS[language]?.location || UI_TRANS['en-US'].location}</label>
                   <div className="flex gap-2">
                     <input 
                       type="text" 
@@ -417,7 +470,7 @@ ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healt
                       value={infoForm.village}
                       onChange={e => setInfoForm({...infoForm, village: e.target.value})}
                       className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter location or use auto-fetch"
+                      placeholder={UI_TRANS[language]?.locPlaceholder || UI_TRANS['en-US'].locPlaceholder}
                     />
                     <button 
                       type="button" 
@@ -426,16 +479,16 @@ ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healt
                       className="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded-xl flex items-center gap-2 transition-colors disabled:opacity-50"
                     >
                       {locating ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
-                      {locating ? 'Locating...' : 'Get Location'}
+                      {locating ? UI_TRANS[language]?.locating || UI_TRANS['en-US'].locating : UI_TRANS[language]?.getLocation || UI_TRANS['en-US'].getLocation}
                     </button>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm text-slate-400">Family Disease History</label>
+                  <label className="text-sm text-slate-400">{UI_TRANS[language]?.history || UI_TRANS['en-US'].history}</label>
                   <textarea 
                     rows={3}
-                    placeholder="E.g. Diabetes, Hypertension in parents..."
+                    placeholder={UI_TRANS[language]?.historyPlaceholder || UI_TRANS['en-US'].historyPlaceholder}
                     value={infoForm.familyHistory}
                     onChange={e => setInfoForm({...infoForm, familyHistory: e.target.value})}
                     className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-blue-500 resize-none"
@@ -443,7 +496,7 @@ ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healt
                 </div>
 
                 <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition-colors mt-6">
-                  Save Information & Continue
+                  {UI_TRANS[language]?.saveAndContinue || UI_TRANS['en-US'].saveAndContinue}
                 </button>
               </form>
             </div>
@@ -455,14 +508,14 @@ ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healt
               <header className="mb-6 flex justify-between items-end">
                 <div>
                   <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <HeartPulse className="w-6 h-6 text-pink-400" /> Patient Vitals
+                    <HeartPulse className="w-6 h-6 text-pink-400" /> {UI_TRANS[language]?.header2 || UI_TRANS['en-US'].header2}
                   </h2>
-                  <p className="text-slate-400">Record symptoms via audio to autofill parameters, or type manually.</p>
+                  <p className="text-slate-400">{UI_TRANS[language]?.sub2 || UI_TRANS['en-US'].sub2}</p>
                 </div>
                 
                 <div className="w-64">
                   <label className="text-sm text-slate-400 flex items-center gap-2 mb-2">
-                    <Globe className="w-4 h-4" /> Audio Language
+                    <Globe className="w-4 h-4" /> {UI_TRANS[language]?.languageLabel || UI_TRANS['en-US'].languageLabel}
                   </label>
                   <select 
                     value={language}
@@ -484,7 +537,7 @@ ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healt
                     <textarea 
                       value={transcript}
                       onChange={(e) => setTranscript(e.target.value)}
-                      placeholder="Speak to record your symptoms, or type here..."
+                      placeholder={UI_TRANS[language]?.recordPlaceholder || UI_TRANS['en-US'].recordPlaceholder}
                       className="w-full h-full bg-transparent text-white resize-none outline-none placeholder:text-slate-500"
                     />
                   </div>
@@ -498,7 +551,7 @@ ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healt
                           : 'bg-white/10 text-white hover:bg-white/20'
                       }`}
                     >
-                      {isRecording ? <><MicOff className="w-5 h-5" /> Stop</> : <><Mic className="w-5 h-5" /> Record</>}
+                      {isRecording ? <><MicOff className="w-5 h-5" /> {UI_TRANS[language]?.stop || UI_TRANS['en-US'].stop}</> : <><Mic className="w-5 h-5" /> {UI_TRANS[language]?.record || UI_TRANS['en-US'].record}</>}
                     </button>
                     <button 
                       onClick={autofillVitals}
@@ -506,7 +559,7 @@ ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healt
                       className="flex-1 bg-blue-600/20 text-blue-400 border border-blue-500/50 hover:bg-blue-600/30 py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all disabled:opacity-50"
                     >
                       {isAutofilling ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-                      Autofill Params
+                      {UI_TRANS[language]?.autofill || UI_TRANS['en-US'].autofill}
                     </button>
                   </div>
                 </div>
@@ -514,35 +567,35 @@ ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healt
                 {/* Vitals Parameters Grid */}
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 grid grid-cols-2 gap-4 content-start">
                   <div className="space-y-1">
-                    <label className="text-xs text-slate-400">BP Systolic</label>
+                    <label className="text-xs text-slate-400">{UI_TRANS[language]?.sys || UI_TRANS['en-US'].sys}</label>
                     <input type="number" name="bp_systolic" value={vitalsForm.bp_systolic} onChange={handleVitalChange} placeholder="120" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-slate-400">BP Diastolic</label>
+                    <label className="text-xs text-slate-400">{UI_TRANS[language]?.dia || UI_TRANS['en-US'].dia}</label>
                     <input type="number" name="bp_diastolic" value={vitalsForm.bp_diastolic} onChange={handleVitalChange} placeholder="80" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-slate-400">Glucose (mg/dL)</label>
+                    <label className="text-xs text-slate-400">{UI_TRANS[language]?.glucose || UI_TRANS['en-US'].glucose}</label>
                     <input type="number" name="blood_glucose" value={vitalsForm.blood_glucose} onChange={handleVitalChange} placeholder="95" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-slate-400">Temp (°F)</label>
+                    <label className="text-xs text-slate-400">{UI_TRANS[language]?.temp || UI_TRANS['en-US'].temp}</label>
                     <input type="number" name="temperature" value={vitalsForm.temperature} onChange={handleVitalChange} placeholder="98.6" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-slate-400">Pulse (bpm)</label>
+                    <label className="text-xs text-slate-400">{UI_TRANS[language]?.pulse || UI_TRANS['en-US'].pulse}</label>
                     <input type="number" name="pulse" value={vitalsForm.pulse} onChange={handleVitalChange} placeholder="72" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-slate-400">SpO2 (%)</label>
+                    <label className="text-xs text-slate-400">{UI_TRANS[language]?.spo2 || UI_TRANS['en-US'].spo2}</label>
                     <input type="number" name="spo2" value={vitalsForm.spo2} onChange={handleVitalChange} placeholder="98" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-slate-400">Weight (kg)</label>
+                    <label className="text-xs text-slate-400">{UI_TRANS[language]?.weight || UI_TRANS['en-US'].weight}</label>
                     <input type="number" name="weight" value={vitalsForm.weight} onChange={handleVitalChange} placeholder="70" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-slate-400">Height (cm)</label>
+                    <label className="text-xs text-slate-400">{UI_TRANS[language]?.height || UI_TRANS['en-US'].height}</label>
                     <input type="number" name="height" value={vitalsForm.height} onChange={handleVitalChange} placeholder="170" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
                   </div>
                 </div>
@@ -553,7 +606,7 @@ ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healt
                 onClick={submitVitals}
                 className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 rounded-xl font-medium flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/25 mt-auto"
               >
-                Analyze Health Risk <Send className="w-5 h-5" />
+                {UI_TRANS[language]?.analyzeBtn || UI_TRANS['en-US'].analyzeBtn} <Send className="w-5 h-5" />
               </button>
             </div>
           )}
@@ -564,16 +617,16 @@ ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healt
               <header className="mb-6 flex justify-between items-center">
                 <div>
                   <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <Activity className="w-6 h-6 text-green-400" /> Disease Detection Results
+                    <Activity className="w-6 h-6 text-green-400" /> {UI_TRANS[language]?.header3 || UI_TRANS['en-US'].header3}
                   </h2>
-                  <p className="text-slate-400">AI analysis based on your info and vitals.</p>
+                  <p className="text-slate-400">{UI_TRANS[language]?.sub3 || UI_TRANS['en-US'].sub3}</p>
                 </div>
                 {!isAnalyzing && analysisResult && (
                   <button 
                     onClick={speakResult}
                     className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-xl font-medium transition-colors flex items-center gap-2"
                   >
-                    <Mic className="w-4 h-4" /> Listen to Result
+                    <Mic className="w-4 h-4" /> {UI_TRANS[language]?.listen || UI_TRANS['en-US'].listen}
                   </button>
                 )}
               </header>
@@ -584,8 +637,8 @@ ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healt
                     <div className="absolute inset-0 border-4 border-blue-500/20 rounded-full" />
                     <div className="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent animate-spin" />
                   </div>
-                  <h3 className="text-lg font-medium text-white mb-2">Analyzing Health Data</h3>
-                  <p className="text-slate-400">Processing with ML models...</p>
+                  <h3 className="text-lg font-medium text-white mb-2">{UI_TRANS[language]?.analyzing || UI_TRANS['en-US'].analyzing}</h3>
+                  <p className="text-slate-400">{UI_TRANS[language]?.processing || UI_TRANS['en-US'].processing}</p>
                 </div>
               ) : (
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 whitespace-pre-wrap text-slate-300 leading-relaxed min-h-[250px]">
