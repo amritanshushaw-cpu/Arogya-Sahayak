@@ -36,6 +36,15 @@ export default function Dashboard() {
         </Link>
       </div>
 
+      <div className="mb-8">
+        <Link href="/dashboard/phc" className="glass-panel w-full p-4 rounded-xl flex items-center justify-center text-center gap-2 border border-purple-500/30 active:bg-slate-800 transition-colors shadow-lg shadow-purple-500/10">
+          <div className="flex flex-col items-center">
+            <span className="font-semibold text-lg text-purple-400">PHC District Dashboard</span>
+            <span className="text-xs text-slate-400">View analytics and disease trends</span>
+          </div>
+        </Link>
+      </div>
+
       <div className="mb-4 flex justify-between items-end">
         <h2 className="text-xl font-bold flex items-center gap-2">
           <Users size={20} className="text-primary" />
