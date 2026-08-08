@@ -272,7 +272,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {copy.cards.map((card, index) => {
+            {copy.cards.map((card: any, index: number) => {
               const cardStyles = [
                 'bg-indigo-600/20 text-indigo-400',
                 'bg-violet-600/20 text-violet-400',
@@ -308,7 +308,7 @@ export default function HomePage() {
 
         <section className="mt-20 glass p-8 rounded-3xl border border-slate-800">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            {copy.highlights.map((item, index) => {
+            {copy.highlights.map((item: any, index: number) => {
               const iconStyles = [
                 'bg-indigo-500/10 text-indigo-400',
                 'bg-emerald-500/10 text-emerald-400',
