@@ -1,86 +1,143 @@
 # Arogya Sahayak (आरोग्य सहायक)
 
-Arogya Sahayak is an offline-first Progressive Web Application (PWA) designed for ASHA workers and rural health teams in India. It combines on-device AI screening, multilingual support, mobile OTP authentication, offline-first sync, and lightweight teleconsultation workflows for low-connectivity environments.
+Arogya Sahayak is a state-of-the-art **hybrid Offline-First AI Healthcare Platform** designed specifically for ASHA workers, ANMs, and rural health clinics (PHCs) in India. 
 
-## 🚀 What this project includes
-- Offline-first health screening with Dexie local storage and PWA-ready service worker caching
-- On-device AI risk scoring using the browser ML stack
-- OTP-based mobile sign-in and sign-up flow with optional Twilio integration and local mock fallback
-- Patient registration, screening, dashboard analytics, and PHC district mapping
-- Teleconsultation booking API and in-browser call UI for remote doctor interaction
-- Admin and PHC dashboards with role-based patient and teleconsultation workflows
+It tackles the core challenges of rural healthcare by providing real-time clinical triage using **Groq's Ultra-Fast LPU LLMs**, while seamlessly falling back to an in-browser deterministic risk engine when the internet goes out. It features full **12-Language Support** with native Text-to-Speech (Google Translate TTS) and Speech-to-Text (Microphone) integration, breaking down digital and literacy barriers for rural healthcare workers.
 
-## 🧩 Tech stack
-- Frontend: Next.js 14, React, TypeScript, Tailwind CSS, Zustand, Dexie, Leaflet
-- Backend: Node.js, Fastify, JWT, Knex.js, PostgreSQL
-- AI/ML: ONNX Runtime Web for on-device inference
+## 🚀 Key Features
+- **Hybrid AI Triage Engine:** Connects to Groq `llama-3.1-8b-instant` for expert clinical analysis, instantly switching to a local heuristic offline model if the network drops.
+- **Universal Multilingual Support:** UI elements, Speech-to-Text (Dictation), and Text-to-Speech (Audio playback) fully support 12 major Indian languages (Hindi, Bengali, Telugu, Marathi, Tamil, etc.).
+- **Offline-First Data Sync:** Powered by Dexie.js and CRDTs, workers can record vitals in remote villages with zero connectivity, and seamlessly auto-sync to the central PostgreSQL database once back online.
+- **Smart Patient Dashboard:** Beautiful, glassmorphic UI built with Tailwind CSS, supporting auto-fetching geolocation and complex clinical forms.
+- **Admin & PHC Teleconsultation:** Role-based dashboards for District Admins, Doctors, and PHC Admins to monitor alerts and schedule teleconsultation follow-ups.
 
-## 📁 Project structure
-- apps/web: Next.js frontend and UI pages
-- apps/server: Fastify API, auth routes, database migrations, and OTP helpers
-- apps/server/src/db: database connection and schema setup
+## 🧩 Tech Stack
+- **Frontend:** Next.js 14, React 18, Tailwind CSS, Zustand, Dexie.js (Offline DB)
+- **Backend:** Fastify (Node.js), PostgreSQL, Knex.js, JSON Web Tokens (JWT)
+- **AI & Integrations:** Groq Cloud (Llama 3.1 8b), Google Translate API (Translation & TTS), Web Speech API (STT)
 
-## ▶️ Local development
-Prerequisites:
-- Node.js 18+
-- npm
+## 📁 Complete Repository Structure
 
-### 0) Clone the repository
-```bash
-git clone https://github.com/amritanshushaw-cpu/Arogya-Sahayak.git
-cd Arogya-Sahayak
+```text
+Arogya-Sahayak/
+├── .gitignore
+├── README.md
+├── apps/
+│   ├── server/
+│   │   ├── .env.example
+│   │   ├── .gitignore
+│   │   ├── knexfile.js
+│   │   ├── package-lock.json
+│   │   ├── package.json
+│   │   ├── data/
+│   │   │   └── .gitkeep
+│   │   └── src/
+│   │       ├── index.js
+│   │       ├── db/
+│   │       │   ├── connection.js
+│   │       │   ├── seed.js
+│   │       │   └── migrations/
+│   │       │       └── 001_initial_schema.js
+│   │       ├── routes/
+│   │       │   ├── abdm.js
+│   │       │   ├── admin.js
+│   │       │   ├── alerts.js
+│   │       │   ├── auth.js
+│   │       │   ├── chat.js (Groq Integration)
+│   │       │   ├── dashboard.js
+│   │       │   ├── patients.js
+│   │       │   ├── screenings.js (Hybrid AI Engine)
+│   │       │   └── teleconsult.js
+│   │       └── services/
+│   │           ├── fhir.js
+│   │           └── sms.js
+│   └── web/
+│       ├── .gitignore
+│       ├── next-env.d.ts
+│       ├── next.config.js
+│       ├── package-lock.json
+│       ├── package.json
+│       ├── postcss.config.js
+│       ├── tailwind.config.js
+│       ├── tsconfig.json
+│       ├── tsconfig.tsbuildinfo
+│       ├── public/
+│       │   ├── manifest.json
+│       │   ├── sw.js
+│       │   ├── icons/
+│       │   └── models/
+│       └── src/
+│           ├── app/
+│           │   ├── globals.css
+│           │   ├── layout.tsx
+│           │   ├── page.tsx
+│           │   ├── admin/
+│           │   ├── auth/
+│           │   │   ├── login/
+│           │   │   └── register/
+│           │   ├── dashboard/
+│           │   │   ├── layout.tsx
+│           │   │   ├── page.tsx
+│           │   │   ├── phc/
+│           │   │   └── register/
+│           │   ├── patient-vitals/
+│           │   │   └── page.tsx (Vitals, AI, Multilingual STT/TTS)
+│           │   ├── patients/
+│           │   ├── screening/
+│           │   └── teleconsult/
+│           ├── components/
+│           │   ├── Chatbot.tsx
+│           │   ├── NetworkSyncProvider.tsx
+│           │   ├── PhcMap.tsx
+│           │   ├── ProtectedRoute.tsx
+│           │   ├── RiskCard.tsx
+│           │   └── VoiceInput.tsx
+│           ├── lib/
+│           │   ├── authStore.ts
+│           │   ├── db.ts
+│           │   ├── sync.ts
+│           │   ├── ml/
+│           │   │   ├── nerParser.ts
+│           │   │   └── riskEngine.ts (Offline Fallback Engine)
+│           │   └── offline/
+│           └── store/
+│               └── useNetworkStore.ts
 ```
 
-### 1) Install dependencies
+## ▶️ Setup & Deployment
+
+### 1. Environment Variables
+You must provide a `GROQ_API_KEY` (or `ml_key`) in the server environment to enable the Online AI Engine. If no key is provided, the backend safely defaults to the heuristic offline model.
+
+**Server `.env` Example:**
+```env
+PORT=3001
+JWT_SECRET=arogya-secret
+DATABASE_URL=postgres://user:pass@host/db
+GROQ_API_KEY=gsk_your_api_key_here
+```
+
+### 2. Running Locally
 ```bash
+# Terminal 1: Backend
 cd apps/server
 npm install
-
-cd ../web
-npm install
-```
-
-### 2) Configure environment variables
-Copy `.env.example` in `apps/server` and update the values as needed:
-```bash
-cd apps/server
-cp .env.example .env
-```
-
-Required values:
-- `JWT_SECRET`
-- `PORT` (default: `3001`)
-- `DATABASE_URL`
-- `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER` (optional; without them the OTP flow uses a mock local code)
-
-### 3) Start the backend
-```bash
-cd apps/server
-npm run dev
-```
-
-### 4) Start the frontend
-In a second terminal:
-```bash
-cd apps/web
-npm run dev
-```
-
-Open http://localhost:3000 to view the app.
-
-The frontend proxies API calls to the backend on http://localhost:3001 by default.
-
-### Optional backend commands
-```bash
-cd apps/server
 npm run migrate
+node src/db/seed.js # Seeds demo admin/asha accounts
+npm run dev
+
+# Terminal 2: Frontend
+cd apps/web
+npm install
+npm run dev
 ```
 
-If Twilio credentials are not configured, the OTP flow will fall back to a mock local code for testing.
+## 🌐 Live Deployments
+- **Frontend (Vercel):** https://arogaya-sahayak.vercel.app
+- **Backend (Render):** https://schemegg.onrender.com
 
-## 🌐 Demo links
-- Frontend: https://arogaya-sahayak.vercel.app
-- Backend health check: /health
-
-## 📝 Notes
-This repository is actively evolving and is intended for demo, prototyping, and field-use validation of rural health workflows.
+## 📝 Demo Login Credentials
+Seed accounts provided for local and demo environments:
+- **Admin/PHC:** Phone: `9876543212`, Password: `1234`
+- **Doctor:** Phone: `9876543211`, Password: `1234`
+- **ASHA Worker:** Phone: `9876543210`, Password: `demo123`
