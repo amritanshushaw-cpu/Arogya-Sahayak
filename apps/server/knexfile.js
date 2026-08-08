@@ -2,32 +2,24 @@ require('dotenv').config();
 
 module.exports = {
   development: {
-    client: 'pg',
+    client: 'better-sqlite3',
     connection: {
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }
+      filename: './data/arogya.db'
     },
+    useNullAsDefault: true,
     migrations: {
       directory: './src/db/migrations'
-    },
-    pool: {
-      min: 0,
-      max: 5
     }
   },
 
   production: {
-    client: 'pg',
+    client: 'better-sqlite3',
     connection: {
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }
+      filename: './data/arogya.db'
     },
+    useNullAsDefault: true,
     migrations: {
       directory: './src/db/migrations'
-    },
-    pool: {
-      min: 0,
-      max: 10
     }
   }
 };
