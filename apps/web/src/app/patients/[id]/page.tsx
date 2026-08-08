@@ -16,7 +16,7 @@ export default function PatientProfilePage({ params }: { params: { id: string } 
   useEffect(() => {
     const fetchPatient = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://schemegg.onrender.com';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
         const res = await fetch(`${apiUrl}/api/patients/${params.id}`, {
           headers: {
             'Authorization': `Bearer ${token}`

@@ -53,7 +53,7 @@ export default function NewPatientPage() {
     setLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://schemegg.onrender.com';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
       const res = await fetch(`${apiUrl}/api/patients`, {
         method: 'POST',
         headers: {

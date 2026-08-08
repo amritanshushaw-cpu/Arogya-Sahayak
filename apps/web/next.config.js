@@ -3,7 +3,8 @@ const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
   async rewrites() {
-    const apiTarget = process.env.NEXT_PUBLIC_API_URL || 'https://schemegg.onrender.com';
+    // Requires NEXT_PUBLIC_API_URL to be set in Vercel for production!
+    const apiTarget = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
     return [
       {
@@ -13,7 +14,7 @@ const nextConfig = {
     ];
   },
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://schemegg.onrender.com',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '',
   },
 };
 module.exports = nextConfig;
