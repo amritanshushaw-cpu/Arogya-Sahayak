@@ -106,7 +106,13 @@ Arogya-Sahayak/
 
 ## ▶️ Setup & Deployment
 
-### 1. Environment Variables
+### 1. Clone the Repository
+```bash
+git clone https://github.com/amritanshushaw-cpu/Arogya-Sahayak.git
+cd Arogya-Sahayak
+```
+
+### 2. Environment Variables
 You must provide a `GROQ_API_KEY` (or `ml_key`) in the server environment to enable the Online AI Engine. If no key is provided, the backend safely defaults to the heuristic offline model.
 
 **Server `.env` Example:**
@@ -117,7 +123,7 @@ DATABASE_URL=postgres://user:pass@host/db
 GROQ_API_KEY=gsk_your_api_key_here
 ```
 
-### 2. Running Locally
+### 3. Running Locally
 ```bash
 # Terminal 1: Backend
 cd apps/server
