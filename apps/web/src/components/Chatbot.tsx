@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, User, Bot } from 'lucide-react';
+import { MessageSquare, X, Send, Bot, Mic, Volume2, Loader2, Globe } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 type Message = {
   id: string;
@@ -9,14 +10,31 @@ type Message = {
   text: string;
 };
 
-// Very basic multilingual triage logic
+const LANGUAGES = [
+  { code: 'English', label: 'English' },
+  { code: 'Hindi', label: 'हिंदी (Hindi)' },
+  { code: 'Bengali', label: 'বাংলা (Bengali)' },
+  { code: 'Telugu', label: 'తెలుగు (Telugu)' },
+  { code: 'Marathi', label: 'मराठी (Marathi)' },
+  { code: 'Tamil', label: 'தமிழ் (Tamil)' },
+  { code: 'Urdu', label: 'اردو (Urdu)' },
+  { code: 'Gujarati', label: 'ગુજરાતી (Gujarati)' },
+  { code: 'Kannada', label: 'ಕನ್ನಡ (Kannada)' },
+  { code: 'Odia', label: 'ଓଡ଼ିଆ (Odia)' },
+  { code: 'Malayalam', label: 'മലയാളം (Malayalam)' },
+  { code: 'Punjabi', label: 'ਪੰਜਾਬੀ (Punjabi)' },
+  { code: 'Assamese', label: 'অসমীয়া (Assamese)' },
+];
+
 export const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { id: '1', sender: 'bot', text: 'Hello! Are you experiencing any symptoms? (Namaste! Kya aapko koi lakshan mehsoos ho rahe hain?)' }
+    { id: '1', sender: 'bot', text: 'Namaste! How can I help you today? Please select your language above.' }
   ]);
   const [input, setInput] = useState('');
-  const [language, setLanguage] = useState<'en' | 'hi'>('en');
+  const [language, setLanguage] = useState('English');
+  const [loading, setLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -27,43 +45,91 @@ export const Chatbot = () => {
     scrollToBottom();
   }, [messages, isOpen]);
 
-  const toggleLanguage = () => {
-    setLanguage(prev => prev === 'en' ? 'hi' : 'en');
+  // Handle Speech Recognition (Input)
+  const startListening = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error('Voice input is not supported in this browser.');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    // Use a generic language mapping based on selection if possible, else default to hi-IN or en-IN
+    const langMap: Record<string, string> = {
+      'Hindi': 'hi-IN', 'Bengali': 'bn-IN', 'Telugu': 'te-IN', 'Marathi': 'mr-IN',
+      'Tamil': 'ta-IN', 'Gujarati': 'gu-IN', 'Kannada': 'kn-IN', 'Malayalam': 'ml-IN',
+      'English': 'en-IN'
+    };
+    recognition.lang = langMap[language] || 'en-IN';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => setIsListening(true);
+    
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(transcript);
+      setIsListening(false);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error(event.error);
+      setIsListening(false);
+      toast.error('Voice recognition failed.');
+    };
+
+    recognition.onend = () => setIsListening(false);
+
+    recognition.start();
   };
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  // Handle Speech Synthesis (Output)
+  const speakText = (text: string) => {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel(); // Stop any ongoing speech
     
-    const userMessage: Message = { id: Date.now().toString(), sender: 'user', text: input };
+    const utterance = new SpeechSynthesisUtterance(text);
+    const langMap: Record<string, string> = {
+      'Hindi': 'hi-IN', 'English': 'en-IN'
+    };
+    utterance.lang = langMap[language] || 'hi-IN'; // Fallback to Hindi voices if available
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const handleSend = async (overrideInput?: string) => {
+    const textToSend = overrideInput || input;
+    if (!textToSend.trim()) return;
+    
+    const userMessage: Message = { id: Date.now().toString(), sender: 'user', text: textToSend.trim() };
     setMessages(prev => [...prev, userMessage]);
-    setInput('');
+    if (!overrideInput) setInput('');
+    setLoading(true);
 
-    // Simple bot logic based on input keywords
-    setTimeout(() => {
-      let botResponse = '';
-      const lowercaseInput = input.toLowerCase();
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://schemegg.onrender.com';
+      const res = await fetch(`${apiUrl}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: textToSend,
+          language: language,
+          history: messages.map(m => ({ role: m.sender === 'bot' ? 'assistant' : 'user', content: m.text }))
+        })
+      });
 
-      if (language === 'en') {
-        if (lowercaseInput.includes('fever') || lowercaseInput.includes('temperature')) {
-          botResponse = 'Do you have a fever? Is it above 101F? Have you taken any medication?';
-        } else if (lowercaseInput.includes('cough')) {
-          botResponse = 'How long have you had the cough? Is it dry or with mucus?';
-        } else {
-          botResponse = 'I see. Please consult a healthcare worker for a proper assessment. In an emergency, seek immediate medical help.';
-        }
-      } else {
-        // Hindi basic responses
-        if (lowercaseInput.includes('bukhar') || lowercaseInput.includes('fever')) {
-          botResponse = 'Kya aapko bukhar hai? Kya yeh 101F se upar hai? Kya aapne koi dawai li hai?';
-        } else if (lowercaseInput.includes('khasi') || lowercaseInput.includes('cough')) {
-          botResponse = 'Aapko khasi kab se hai? Sukhi khasi hai ya balgam wali?';
-        } else {
-          botResponse = 'Thik hai. Kripya sahi janch ke liye kisi swasthya karyakarta se sampark karein. Aapatkalin sthiti mein turant chikitsiye madad lein.';
-        }
-      }
+      if (!res.ok) throw new Error('Failed to fetch response');
+      const data = await res.json();
+      
+      const botMessage: Message = { id: (Date.now() + 1).toString(), sender: 'bot', text: data.reply };
+      setMessages(prev => [...prev, botMessage]);
+      speakText(data.reply); // Auto-speak response
 
-      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'bot', text: botResponse }]);
-    }, 1000);
+    } catch (error) {
+      console.error(error);
+      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'bot', text: 'I am currently offline or experiencing a network error. Please try again later.' }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -79,7 +145,7 @@ export const Chatbot = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 p-4 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg hover:shadow-indigo-500/25 transition-all z-50 flex items-center justify-center"
+          className="fixed bottom-6 right-6 p-4 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all z-50 flex items-center justify-center animate-bounce"
         >
           <MessageSquare size={24} />
         </button>
@@ -87,31 +153,39 @@ export const Chatbot = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 w-80 sm:w-96 h-[32rem] max-h-[80vh] flex flex-col bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden">
+        <div className="fixed bottom-6 right-6 w-[350px] sm:w-[400px] h-[32rem] max-h-[85vh] flex flex-col bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden font-sans">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-white/10 bg-slate-900/50">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
-                <Bot className="text-indigo-400" size={20} />
+          <div className="flex flex-col border-b border-white/10 bg-slate-900/80 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                  <Bot className="text-emerald-400" size={20} />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white text-sm">AI Medical Triage</h3>
+                  <p className="text-xs text-emerald-300">Powered by Groq</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-white text-sm">Triage Assistant</h3>
-                <p className="text-xs text-indigo-300">Multilingual Support</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-               <button 
-                onClick={toggleLanguage}
-                className="text-xs px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-slate-300 transition-colors"
-              >
-                {language === 'en' ? 'EN' : 'HI'}
-              </button>
               <button
                 onClick={() => setIsOpen(false)}
                 className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
               >
                 <X size={20} />
               </button>
+            </div>
+            
+            {/* Language Selector */}
+            <div className="flex items-center gap-2 bg-black/40 p-2 rounded-xl border border-white/5">
+              <Globe className="text-gray-400 w-4 h-4 ml-1" />
+              <select 
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="flex-1 bg-transparent text-sm text-gray-200 focus:outline-none appearance-none"
+              >
+                {LANGUAGES.map(lang => (
+                  <option key={lang.code} value={lang.code} className="bg-slate-800">{lang.label}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -122,35 +196,61 @@ export const Chatbot = () => {
                 key={msg.id}
                 className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
+                {msg.sender === 'bot' && (
+                  <button 
+                    onClick={() => speakText(msg.text)} 
+                    className="mr-2 self-end mb-1 p-1.5 rounded-full bg-slate-800 text-slate-400 hover:text-emerald-400 hover:bg-slate-700 transition-colors"
+                    title="Read Aloud"
+                  >
+                    <Volume2 size={14} />
+                  </button>
+                )}
                 <div
-                  className={`max-w-[80%] p-3 rounded-2xl ${
+                  className={`max-w-[75%] p-3 text-sm leading-relaxed ${
                     msg.sender === 'user'
-                      ? 'bg-indigo-600 text-white rounded-br-sm'
-                      : 'bg-slate-800 text-slate-200 border border-white/5 rounded-bl-sm'
+                      ? 'bg-emerald-600 text-white rounded-2xl rounded-br-sm shadow-md'
+                      : 'bg-slate-800 text-slate-200 border border-white/5 rounded-2xl rounded-bl-sm shadow-md'
                   }`}
                 >
-                  <p className="text-sm">{msg.text}</p>
+                  {msg.text}
                 </div>
               </div>
             ))}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-slate-800 border border-white/5 rounded-2xl rounded-bl-sm p-3 flex items-center space-x-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+                  <span className="text-xs text-gray-400">Translating & Thinking...</span>
+                </div>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
 
           {/* Input Area */}
-          <div className="p-4 border-t border-white/10 bg-slate-900/50">
-            <div className="flex items-center space-x-2">
+          <div className="p-3 border-t border-white/10 bg-slate-900/80">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={startListening}
+                className={`p-3 rounded-xl transition-all flex items-center justify-center shrink-0 ${isListening ? 'bg-red-500/20 text-red-400 border border-red-500/50 animate-pulse' : 'bg-slate-800 text-slate-300 border border-white/5 hover:bg-slate-700'}`}
+                title="Speak"
+              >
+                <Mic size={18} />
+              </button>
+              
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={language === 'en' ? "Type a symptom..." : "Koi lakshan type karein..."}
-                className="flex-1 bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all"
+                placeholder="Type your symptoms..."
+                className="flex-1 bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition-all"
               />
+              
               <button
-                onClick={handleSend}
-                disabled={!input.trim()}
-                className="p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 disabled:hover:bg-indigo-600 transition-colors flex items-center justify-center"
+                onClick={() => handleSend()}
+                disabled={!input.trim() || loading}
+                className="p-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50 transition-all flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.2)]"
               >
                 <Send size={18} />
               </button>

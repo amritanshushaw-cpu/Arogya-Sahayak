@@ -26,6 +26,7 @@ fastify.register(async function (api) {
   api.register(require('./routes/teleconsult'), { prefix: '/teleconsult' });
   api.register(require('./routes/dashboard'), { prefix: '/dashboard' });
   api.register(require('./routes/abdm'), { prefix: '/abdm' });
+  api.register(require('./routes/chat'), { prefix: '/chat' });
 }, { prefix: '/api' });
 
 // Health check endpoint
