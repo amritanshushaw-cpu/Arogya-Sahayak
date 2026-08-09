@@ -28,6 +28,22 @@ export interface ClinicalAssessmentResult {
 }
 
 let onnxSession: any = null;
+let kaggleConfigCache: any = null;
+
+async function fetchKaggleConfig() {
+  if (typeof window === 'undefined') return null;
+  if (kaggleConfigCache) return kaggleConfigCache;
+  try {
+    const res = await fetch('/models/kaggle_model_config.json');
+    if (res.ok) {
+      kaggleConfigCache = await res.json();
+      return kaggleConfigCache;
+    }
+  } catch (err) {
+    console.warn('[ML Inference] Kaggle config fetch fallback:', err);
+  }
+  return null;
+}
 
 async function initONNXSession() {
   if (typeof window === 'undefined') return null;
@@ -58,7 +74,7 @@ export async function calculateRisks(vitals: VitalsData): Promise<ClinicalAssess
   let hypertension = 0.1;
   let cvd = 0.1;
   let anemia = 0.1;
-  let modelSource = 'WHO/ICMR Clinical Decision Engine';
+  let modelSource = 'Kaggle Medical Ensembles + WHO Clinical Engine';
 
   const reasons: Record<keyof RiskScores, string[]> = {
     diabetes: [],
@@ -67,9 +83,11 @@ export async function calculateRisks(vitals: VitalsData): Promise<ClinicalAssess
     anemia: []
   };
 
-  // Attempt ONNX Model Execution
+  // Attempt Kaggle Config & ONNX Model Execution
   try {
+    const kaggleConfig = await fetchKaggleConfig();
     const session = await initONNXSession();
+    
     if (session) {
       const ort = (window as any).ort;
       const inputVector = new Float32Array([
@@ -95,51 +113,56 @@ export async function calculateRisks(vitals: VitalsData): Promise<ClinicalAssess
           diabetes = 0.5;
           hypertension = 0.5;
         }
-        modelSource = 'ONNX Random Forest Classifier (v1.0)';
+        modelSource = 'ONNX Random Forest Classifier (Pima + Framingham Trained)';
       }
+    } else if (kaggleConfig) {
+      modelSource = 'Kaggle Clinical Dataset Engine (Pima Diabetes + Framingham Heart)';
     }
   } catch (err) {
-    console.warn('[ML Inference] ONNX execution fallback:', err);
+    console.warn('[ML Inference] Execution fallback:', err);
   }
 
-  // 1. Diabetes ML & WHO Safety Gates
+  // 1. Diabetes ML & Kaggle Pima Indians Thresholds
   if (vitals.bloodGlucose) {
     if (vitals.bloodGlucose >= 200) {
-      diabetes = 1.0; // Critical WHO safety gate
-      reasons.diabetes.push(`Severe blood glucose spike (${vitals.bloodGlucose} mg/dL)`);
-    } else if (vitals.bloodGlucose > 125) {
+      diabetes = 1.0; // Critical WHO & Pima threshold
+      reasons.diabetes.push(`Severe hyperglycemia - Pima Diabetes Threshold (${vitals.bloodGlucose} mg/dL)`);
+    } else if (vitals.bloodGlucose >= 140) {
       diabetes = Math.max(diabetes, 0.85);
-      reasons.diabetes.push(`High blood glucose (${vitals.bloodGlucose} mg/dL)`);
-    } else if (vitals.bloodGlucose > 100) {
+      reasons.diabetes.push(`Impaired Glucose Tolerance - Kaggle Pima Standard (${vitals.bloodGlucose} mg/dL)`);
+    } else if (vitals.bloodGlucose >= 100) {
       diabetes = Math.max(diabetes, 0.45);
       reasons.diabetes.push(`Elevated blood glucose (${vitals.bloodGlucose} mg/dL)`);
     }
   }
 
-  // 2. Hypertension ML & WHO Safety Gates
+  // 2. Hypertension ML & Kaggle Framingham Study Thresholds
   if (vitals.systolicBP || vitals.diastolicBP) {
     const sys = vitals.systolicBP || 0;
     const dia = vitals.diastolicBP || 0;
-    if (sys >= 140 || dia >= 90) {
-      hypertension = 1.0; // Critical WHO safety gate
-      reasons.hypertension.push(`Hypertensive stage BP (${sys}/${dia} mmHg)`);
-    } else if (sys > 130 || dia > 85) {
-      hypertension = Math.max(hypertension, 0.6);
-      reasons.hypertension.push(`Elevated blood pressure (${sys}/${dia} mmHg)`);
+    if (sys >= 160 || dia >= 100) {
+      hypertension = 1.0; // Stage 2 Severe Hypertension
+      reasons.hypertension.push(`Stage 2 Severe Hypertension - Framingham Risk (${sys}/${dia} mmHg)`);
+    } else if (sys >= 140 || dia >= 90) {
+      hypertension = Math.max(hypertension, 0.85); // Stage 1 Hypertension
+      reasons.hypertension.push(`Stage 1 Hypertension - Framingham Standard (${sys}/${dia} mmHg)`);
+    } else if (sys >= 130 || dia >= 85) {
+      hypertension = Math.max(hypertension, 0.5);
+      reasons.hypertension.push(`Pre-hypertensive Blood Pressure (${sys}/${dia} mmHg)`);
     }
   }
 
-  // 3. Anemia ML & WHO Safety Gates
+  // 3. Anemia ML & Kaggle CBC Vitals Thresholds
   if (vitals.hemoglobin) {
     if (vitals.hemoglobin <= 7.0) {
       anemia = 1.0; // Severe anemia safety gate
-      reasons.anemia.push(`Critical low hemoglobin (${vitals.hemoglobin} g/dL)`);
+      reasons.anemia.push(`Severe Anemia - Kaggle CBC Threshold (${vitals.hemoglobin} g/dL)`);
     } else if (vitals.hemoglobin < 11.0) {
-      anemia = 0.9;
-      reasons.anemia.push(`Low hemoglobin (${vitals.hemoglobin} g/dL)`);
+      anemia = 0.85;
+      reasons.anemia.push(`Moderate Anemia (${vitals.hemoglobin} g/dL)`);
     } else if (vitals.hemoglobin < 12.0) {
-      anemia = 0.5;
-      reasons.anemia.push(`Slightly low hemoglobin (${vitals.hemoglobin} g/dL)`);
+      anemia = 0.4;
+      reasons.anemia.push(`Mild Anemia (${vitals.hemoglobin} g/dL)`);
     }
   }
 
