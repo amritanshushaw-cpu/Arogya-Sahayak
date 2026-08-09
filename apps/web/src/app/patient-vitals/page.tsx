@@ -101,6 +101,64 @@ export default function PatientDashboard() {
   // Detection State
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  // Clean up speech synthesis when component unmounts or step changes
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const speakResult = () => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      toast.error(UI_TRANS[language]?.audioFailed || 'Audio playback is not supported in this browser.');
+      return;
+    }
+
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    if (!analysisResult) {
+      toast.error('No analysis result to read out.');
+      return;
+    }
+
+    window.speechSynthesis.cancel(); // Stop any previous speech
+
+    // Format clean text for text-to-speech engine
+    const textToSpeak = analysisResult
+      .replace(/[*#_`]/g, '')
+      .replace(/\[Offline Diagnostic Model\]/g, 'Diagnostic Summary.')
+      .replace(/\n+/g, '. ')
+      .trim();
+
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    utterance.lang = language;
+    utterance.rate = 0.95;
+
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+    };
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+    };
+
+    utterance.onerror = (err) => {
+      console.error('Speech synthesis error:', err);
+      setIsSpeaking(false);
+      toast.error(UI_TRANS[language]?.audioFailed || 'Audio playback failed.');
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
+
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -413,35 +471,7 @@ ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healt
     setVitalsForm({ ...vitalsForm, [e.target.name]: e.target.value });
   };
 
-  const speakResult = () => {
-    if (!analysisResult) return;
-    try {
-      const targetLang = language.split('-')[0];
-      // Chunk text if it's too long (Google TTS has a ~200 char limit per request)
-      const textChunks = analysisResult.match(/.{1,150}(\s|$)/g) || [analysisResult];
-      
-      let currentChunk = 0;
-      const playNextChunk = () => {
-        if (currentChunk < textChunks.length) {
-          const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${targetLang}&client=tw-ob&q=${encodeURIComponent(textChunks[currentChunk])}`;
-          const audio = new Audio(url);
-          audio.onended = () => {
-            currentChunk++;
-            playNextChunk();
-          };
-          audio.play().catch(e => {
-            console.error("Audio play failed:", e);
-            toast.error(UI_TRANS[language]?.audioFailed || UI_TRANS['en-US'].audioFailed);
-          });
-        }
-      };
-      
-      playNextChunk();
-    } catch (e) {
-      console.error(e);
-      toast.error(UI_TRANS[language]?.audioFailed || UI_TRANS['en-US'].audioFailed);
-    }
-  };
+
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 md:p-8 font-sans relative overflow-hidden">
@@ -677,9 +707,14 @@ ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healt
                 {!isAnalyzing && analysisResult && (
                   <button 
                     onClick={speakResult}
-                    className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-xl font-medium transition-colors flex items-center gap-2"
+                    className={`py-2 px-4 rounded-xl font-medium transition-all flex items-center gap-2 text-white shadow-lg ${
+                      isSpeaking 
+                        ? 'bg-rose-600 hover:bg-rose-700 animate-pulse shadow-rose-500/30 ring-2 ring-rose-400/50' 
+                        : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/25'
+                    }`}
                   >
-                    <Mic className="w-4 h-4" /> {UI_TRANS[language]?.listen || UI_TRANS['en-US'].listen}
+                    {isSpeaking ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                    <span>{isSpeaking ? 'Stop Audio' : (UI_TRANS[language]?.listen || UI_TRANS['en-US'].listen)}</span>
                   </button>
                 )}
               </header>
