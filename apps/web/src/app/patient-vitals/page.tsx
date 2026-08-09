@@ -37,7 +37,7 @@ const UI_TRANS: any = {
     record: 'Record', stop: 'Stop', autofill: 'Autofill Params',
     sys: 'BP Systolic', dia: 'BP Diastolic', glucose: 'Glucose (mg/dL)', temp: 'Temp (°F)', pulse: 'Pulse (bpm)', spo2: 'SpO2 (%)', weight: 'Weight (kg)', height: 'Height (cm)',
     analyzeBtn: 'Analyze Health Risk', header3: 'Disease Detection Results', sub3: 'AI analysis based on your info and vitals.',
-    listen: 'Listen to Result', analyzing: 'Analyzing Health Data', processing: 'Processing with ML models...', audioFailed: 'Audio playback failed.'
+    listen: 'Listen to Result', analyzing: 'Analyzing Health Data', processing: 'Processing with ML models...', audioFailed: 'Audio playback failed.', audioStopped: 'Audio playback stopped.'
   },
   'hi-IN': { 
     tab1: 'मूल जानकारी', tab2: 'वाइटल्स और लक्षण', tab3: 'रोग का पता लगाना', 
@@ -53,7 +53,7 @@ const UI_TRANS: any = {
     record: 'रिकॉर्ड करें', stop: 'रोकें', autofill: 'स्वतः भरें',
     sys: 'बीपी सिस्टोलिक', dia: 'बीपी डायस्टोलिक', glucose: 'ग्लूकोज (mg/dL)', temp: 'तापमान (°F)', pulse: 'पल्स (bpm)', spo2: 'SpO2 (%)', weight: 'वजन (kg)', height: 'ऊंचाई (cm)',
     analyzeBtn: 'स्वास्थ्य जोखिम का विश्लेषण करें', header3: 'रोग पहचान परिणाम', sub3: 'एआई विश्लेषण।',
-    listen: 'परिणाम सुनें', analyzing: 'विश्लेषण कर रहा है', processing: 'एमएल मॉडल के साथ प्रसंस्करण...', audioFailed: 'ऑडियो विफल रहा।'
+    listen: 'परिणाम सुनें', analyzing: 'विश्लेषण कर रहा है', processing: 'एमएल मॉडल के साथ प्रसंस्करण...', audioFailed: 'ऑडियो विफल रहा।', audioStopped: 'ऑडियो प्लेबैक रोक दिया गया।'
   },
   'bn-IN': { tab1: 'প্রাথমিক তথ্য', tab2: 'ভাইটালস ও লক্ষণ', tab3: 'রোগ সনাক্তকরণ', save: 'তথ্য সংরক্ষণ করুন', analyze: 'ভাইটালস বিশ্লেষণ করুন' },
   'te-IN': { tab1: 'ప్రాథమిక సమాచారం', tab2: 'లక్షణాలు', tab3: 'వ్యాధి గుర్తింపు', save: 'సమాచారం భద్రపరుచు', analyze: 'విశ్లేషించండి' },
@@ -121,6 +121,7 @@ export default function PatientDashboard() {
     if (isSpeaking) {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
+      toast(UI_TRANS[language]?.audioStopped || 'Audio playback stopped.', { icon: 'ℹ️' });
       return;
     }
 
@@ -151,6 +152,11 @@ export default function PatientDashboard() {
     };
 
     utterance.onerror = (err) => {
+      // Do not display failure toast if speech was deliberately stopped/canceled
+      if (err.error === 'interrupted' || err.error === 'canceled') {
+        setIsSpeaking(false);
+        return;
+      }
       console.error('Speech synthesis error:', err);
       setIsSpeaking(false);
       toast.error(UI_TRANS[language]?.audioFailed || 'Audio playback failed.');
