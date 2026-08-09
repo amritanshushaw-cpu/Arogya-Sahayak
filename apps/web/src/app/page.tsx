@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/authStore';
+import { LanguageSelector } from '@/components/LanguageSelector';
 import {
   Stethoscope,
   Mic,
@@ -632,24 +633,12 @@ export default function HomePage() {
               {copy.nav[2]}
             </Link>
           </nav>
-          <div className="flex items-center space-x-4">
-            <div className="hidden sm:flex items-center space-x-2 bg-slate-800/50 rounded-full px-3 py-1.5 border border-slate-700/50">
-              <Globe className="w-4 h-4 text-slate-400" aria-hidden="true" />
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                aria-label="Select Interface Language"
-                className="bg-transparent text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded appearance-none cursor-pointer"
-              >
-                {LANGUAGES.map(l => (
-                  <option key={l.code} value={l.code} className="bg-slate-900 text-slate-200">{l.name}</option>
-                ))}
-              </select>
-            </div>
-            <Link href="/auth/login" className="text-sm font-medium text-indigo-400 hover:text-indigo-300 focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-md px-2 py-1">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <LanguageSelector />
+            <Link href="/auth/login" className="text-sm font-medium text-indigo-400 hover:text-indigo-300 focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-md px-2.5 py-1.5 transition-colors">
               {copy.signIn}
             </Link>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono-tech">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono-tech flex-shrink-0">
               <WifiOff className="w-3.5 h-3.5" aria-hidden="true" />
               {copy.status}
             </span>

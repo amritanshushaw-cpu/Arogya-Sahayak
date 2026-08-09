@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { db, getPHCDatabase } from '@/lib/db';
+import { LanguageSelector } from '@/components/LanguageSelector';
 
 interface RegisteredPHC {
   id: string;
@@ -226,18 +227,8 @@ function LoginForm() {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="flex flex-col">
-            <label htmlFor="login-lang" className="text-xs font-medium text-gray-300 mb-1.5">Language Preference</label>
-            <select
-              id="login-lang"
-              name="language"
-              value={language || 'en-US'}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="w-full bg-black/50 border border-white/10 rounded-xl py-2.5 px-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
-            >
-              {LANGUAGES.map(l => (
-                <option key={l.code} value={l.code} className="bg-slate-900">{l.name}</option>
-              ))}
-            </select>
+            <label className="text-xs font-medium text-gray-300 mb-1.5">Language Preference</label>
+            <LanguageSelector className="w-full justify-between py-2.5 px-4" />
           </div>
 
           <div>

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { db, getPHCDatabase } from '@/lib/db';
+import { LanguageSelector } from '@/components/LanguageSelector';
 
 interface RegisteredPHC {
   id: string;
@@ -198,6 +199,10 @@ export default function RegisterPage() {
         </div>
 
         <form onSubmit={handleRegister} className="space-y-4">
+          <div className="flex flex-col">
+            <label className="text-xs font-medium text-gray-300 mb-1.5">Language Preference</label>
+            <LanguageSelector className="w-full justify-between py-2.5 px-4" />
+          </div>
           <div>
             <label htmlFor="reg-role" className="block text-xs font-medium text-gray-300 mb-1.5">Account Role</label>
             <select

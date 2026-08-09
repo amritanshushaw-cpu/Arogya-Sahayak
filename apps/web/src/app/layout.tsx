@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { Toaster } from 'react-hot-toast';
 import { NetworkSyncProvider } from '../components/NetworkSyncProvider';
 import { Chatbot } from '../components/Chatbot';
-import { LanguageSelector } from '../components/LanguageSelector';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -29,7 +28,6 @@ export default function RootLayout({
         <NetworkSyncProvider>
           <div id="main-content">{children}</div>
           <Chatbot />
-          <LanguageSelector />
         </NetworkSyncProvider>
         <Toaster
           position="top-right"
