@@ -85,20 +85,37 @@ export const Chatbot = () => {
 
   // Handle Speech Synthesis (Output)
   const speakText = (text: string) => {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel(); // Stop any ongoing speech
-    
-    const utterance = new SpeechSynthesisUtterance(text);
     const langMap: Record<string, string> = {
-      'Hindi': 'hi-IN', 'Bengali': 'bn-IN', 'Telugu': 'te-IN', 'Marathi': 'mr-IN',
-      'Tamil': 'ta-IN', 'Gujarati': 'gu-IN', 'Kannada': 'kn-IN', 'Malayalam': 'ml-IN',
-      'English': 'en-IN', 'Urdu': 'ur-IN', 'Odia': 'or-IN', 'Punjabi': 'pa-IN', 'Assamese': 'as-IN'
+      'Hindi': 'hi', 'Bengali': 'bn', 'Telugu': 'te', 'Marathi': 'mr',
+      'Tamil': 'ta', 'Gujarati': 'gu', 'Kannada': 'kn', 'Malayalam': 'ml',
+      'English': 'en', 'Urdu': 'ur', 'Odia': 'or', 'Punjabi': 'pa', 'Assamese': 'as'
     };
-    utterance.lang = langMap[language] || 'hi-IN'; // Fallback to Hindi voices if available
-    window.speechSynthesis.speak(utterance);
+    const langCode = langMap[language] || 'hi';
+    
+    if ((window as any).currentAudio) {
+      (window as any).currentAudio.pause();
+    }
+    
+    const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${langCode}&client=tw-ob`;
+    const audio = new Audio(url);
+    
+    audio.play().catch(e => {
+      console.warn("Audio play failed, falling back to window.speechSynthesis", e);
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = langCode + '-IN';
+        window.speechSynthesis.speak(utterance);
+      }
+    });
+    
+    (window as any).currentAudio = audio;
   };
 
   const handleClose = () => {
+    if ((window as any).currentAudio) {
+      (window as any).currentAudio.pause();
+    }
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }

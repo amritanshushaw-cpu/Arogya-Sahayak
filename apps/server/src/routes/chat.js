@@ -11,10 +11,9 @@ module.exports = async function (fastify, opts) {
         return reply.code(500).send({ error: 'Groq API Key not configured on server' });
       }
 
-      const systemPrompt = `You are Arogya Sahayak, a helpful AI medical triage assistant for rural India.
+      const systemPrompt = `You are Arogya Sahayak, an advanced AI medical triage expert for rural India.
 Respond STRICTLY in the following language: ${language || 'English'}.
-Always be concise, empathetic, and ask clarifying questions about symptoms.
-If symptoms are severe, advise seeing a doctor immediately.`;
+Provide a highly detailed, constructive, and accurate medical assessment based on the reported symptoms. Give likely differential diagnoses (optimized for high F1 score accuracy), recommended safe home remedies or first-aid, lifestyle advice, and specific warning signs. Do not just generically say "consult a doctor" unless it's a critical emergency. Be highly informative, structured, and practical for rural healthcare settings.`;
 
       const messages = [
         { role: 'system', content: systemPrompt },

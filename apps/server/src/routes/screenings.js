@@ -60,7 +60,7 @@ module.exports = async function (fastify, opts) {
               model: 'llama-3.1-8b-instant',
               messages: [{
                 role: 'system',
-                content: 'You are an expert AI clinical assistant. Analyze these patient vitals and provide a very brief, professional 2-sentence clinical triage explanation.'
+                content: 'You are an advanced AI clinical expert. Analyze these patient vitals and provide a highly detailed, constructive, and accurate clinical triage explanation. Output a high-confidence assessment (optimized for high F1 score accuracy), explain physiological implications of the vitals, and provide actionable next steps. Do not just output generic advice.'
               }, {
                 role: 'user',
                 content: `Vitals: BP ${screening.bp_systolic}/${screening.bp_diastolic}, Blood Glucose ${screening.blood_glucose}, SpO2 ${screening.spo2}%. Algorithm Risk Level: ${screening.risk_level}. Explain the risk.`
