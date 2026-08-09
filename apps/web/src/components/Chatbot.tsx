@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Bot, Mic, Volume2, Loader2, Globe } from 'lucide-react';
+import { MessageSquare, X, Send, Bot, Mic, Volume2, VolumeX, Loader2, Globe } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/lib/authStore';
 import { LANGUAGES as GLOBAL_LANGUAGES } from '@/lib/translations';
@@ -25,6 +25,21 @@ const LANG_MAPPING: Record<string, { ttsCode: string; sttCode: string; name: str
   'or-IN': { ttsCode: 'or-IN', sttCode: 'or-IN', name: 'Odia (ଓଡ଼ିଆ)' },
   'ml-IN': { ttsCode: 'ml-IN', sttCode: 'ml-IN', name: 'Malayalam (മലയാളം)' },
   'pa-IN': { ttsCode: 'pa-IN', sttCode: 'pa-IN', name: 'Punjabi (ਪੰਜਾਬੀ)' },
+};
+
+const WELCOME_MESSAGES: Record<string, string> = {
+  'en-US': 'Namaste! How can I help you today? Please ask your health or symptom questions.',
+  'hi-IN': 'नमस्ते! आरोग्य सहायक में आपका स्वागत है। कृपया अपने स्वास्थ्य या लक्षणों के प्रश्न पूछें।',
+  'bn-IN': 'নমস্কার! আরোগ্য সহায়কে আপনাকে স্বাগতম। আপনার যেকোনো স্বাস্থ্য বা লক্ষণের প্রশ্ন এখানে জিজ্ঞাসা করুন।',
+  'te-IN': 'నమస్కారం! ఆరోగ్య సహాయక్‌కి స్వాగతం. దయచేసి మీ ఆరోగ్య ప్రశ్నలను అడగండి.',
+  'mr-IN': 'नमस्कार! आरोग्य सहाय्यकमध्ये आपले स्वागत आहे. कृपया तुमचे आरोग्य प्रश्न विचारा.',
+  'ta-IN': 'வணக்கம்! ஆரோக்கிய உதவியாளருக்கு வரவேற்கிறோம். உங்கள் சுகாதார கேள்விகளைக் கேட்கவும்.',
+  'gu-IN': 'નમસ્તે! આરોગ્ય સહાયકમાં તમારું સ્વાગત છે. કૃપા કરીને તમારા આરોગ્ય પ્રશ્નો પૂછો.',
+  'ur-IN': 'ناماستے! آروگیہ سہایک میں خوش آمدید। برائے مہربانی اپنے صحت کے سوالات پوچھیں۔',
+  'kn-IN': 'ನಮಸ್ಕಾರ! ಆರೋಗ್ಯ ಸಹಾಯಕ್‌ಗೆ స్వాಗತ. దಯವಿಟ್ಟು ನಿಮ್ಮ ಆರೋಗ್ಯ ಪ್ರಶ್ನೆಗಳನ್ನು ಕೇಳಿ.',
+  'or-IN': 'ନମସ୍କାର! ଆରୋଗ୍ୟ ସହାୟକରେ ଆପଣଙ୍କୁ ସ୍ୱାଗତ। ଦୟାକରି ଆପଣଙ୍କ ସ୍ୱାସ୍ଥ୍ୟ ପ୍ରଶ୍ନ ପଚାରନ୍ତୁ।',
+  'ml-IN': 'നമസ്കാരം! ആരോഗ്യ സഹായിയിലേക്ക് സ്വാഗതം. നിങ്ങളുടെ ആരോഗ്യ ചോദ്യങ്ങൾ ചോദിക്കുക.',
+  'pa-IN': 'ਨਮਸਤੇ! ਅਰੋਗਿਆ ਸਹਾਇਕ ਵਿੱਚ ਤੁਹਾਡਾ ਸਵਾਗਤ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਸਿਹਤ ਸਵਾਲ ਪੁੱਛੋ।',
 };
 
 function generateOfflineClinicalReply(userText: string, langCode: string): string {
@@ -62,19 +77,6 @@ function generateOfflineClinicalReply(userText: string, langCode: string): strin
     ];
   }
 
-  if (langCode === 'hi-IN') {
-    return `[ऑफ़लाइन एआई क्लिनिकल ट्राइएज - आरोग्य सहायक]
-
-1. जोखिम स्तर: ${riskLevel.includes('RED') ? '🔴 उच्च जोखिम (लाल चेतावनी)' : riskLevel.includes('MODERATE') ? '🟡 मध्यम जोखिम (पीला)' : '🟢 सामान्य जोखिम (हरा)'}
-
-2. नैदानिक ​​मूल्यांकन: ${riskSummary === 'Severe cardiopulmonary symptoms detected. Immediate medical intervention recommended.' ? 'सीने में दर्द या सांस लेने में तकलीफ के लक्षण। तत्काल पीएचसी आपातकालीन जांच आवश्यक है।' : isFever ? 'शरीर का तापमान और बुखार बढ़ा हुआ है।' : isBP ? 'रक्तचाप (BP) में उतार-चढ़ाव संकेत।' : 'ऑफ़लाइन एआई मॉडल द्वारा प्राथमिक लक्षण जांच पूरी की गई।'}
-
-3. अनुशंसित कार्रवाई:
-${advice.map(a => '• ' + a).join('\n')}
-
-(नोट: नेटवर्क अनुपलब्ध होने पर ऑन-डिवाइस क्लिनिकल मॉडल द्वारा जनरेट किया गया उत्तर।)`;
-  }
-
   if (langCode === 'bn-IN') {
     return `[অফলাইন এআই ক্লিনিক্যাল ট্রায়াজ - আরোগ্য সহায়ক]
 
@@ -86,6 +88,19 @@ ${advice.map(a => '• ' + a).join('\n')}
 ${advice.map(a => '• ' + a).join('\n')}
 
 (নোট: নেটওয়ার্ক সংযোগ না থাকায় লোকাল এআই ইঞ্জিন থেকে উত্তর দেওয়া হলো।)`;
+  }
+
+  if (langCode === 'hi-IN') {
+    return `[ऑफ़लाइन एआई क्लिनिकल ट्राइएज - आरोग्य सहायक]
+
+1. जोखिम स्तर: ${riskLevel.includes('RED') ? '🔴 उच्च जोखिम (लाल चेतावनी)' : riskLevel.includes('MODERATE') ? '🟡 मध्यम जोखिम (पीला)' : '🟢 सामान्य जोखिम (हरा)'}
+
+2. नैदानिक ​​मूल्यांकन: ${isChestPain ? 'सीने में दर्द या सांस लेने में तकलीफ के लक्षण। तत्काल पीएचसी आपातकालीन जांच आवश्यक है।' : isFever ? 'शरीर का तापमान और बुखार बढ़ा हुआ है।' : 'ऑफ़लाइन एआई मॉडल द्वारा प्राथमिक लक्षण जांच पूरी की गई।'}
+
+3. अनुशंसित कार्रवाई:
+${advice.map(a => '• ' + a).join('\n')}
+
+(नोट: नेटवर्क अनुपलब्ध होने पर ऑन-डिवाइस क्लिनिकल मॉडल द्वारा जनरेट किया गया उत्तर।)`;
   }
 
   return `[Offline AI Clinical Decision Support]
@@ -104,11 +119,12 @@ export const Chatbot = () => {
   const { language: globalLang, setLanguage: setGlobalLang } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { id: '1', sender: 'bot', text: 'Namaste! How can I help you today? Please ask your health or symptom questions.' }
+    { id: '1', sender: 'bot', text: WELCOME_MESSAGES[globalLang || 'en-US'] || WELCOME_MESSAGES['en-US'] }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [activeSpeakingId, setActiveSpeakingId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const currentLangObj = LANG_MAPPING[globalLang || 'en-US'] || LANG_MAPPING['en-US'];
@@ -120,6 +136,16 @@ export const Chatbot = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isOpen]);
+
+  // Update initial welcome message when global language changes
+  useEffect(() => {
+    setMessages(prev => {
+      if (prev.length === 1 && prev[0].sender === 'bot') {
+        return [{ id: '1', sender: 'bot', text: WELCOME_MESSAGES[globalLang || 'en-US'] || WELCOME_MESSAGES['en-US'] }];
+      }
+      return prev;
+    });
+  }, [globalLang]);
 
   // Handle Vernacular Speech Recognition (Voice Input)
   const startListening = () => {
@@ -153,33 +179,55 @@ export const Chatbot = () => {
     recognition.start();
   };
 
-  // Handle Vernacular Speech Synthesis (Voice Output)
-  const speakText = (text: string) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      
-      const cleanText = text.replace(/[*#_`]/g, '').replace(/\n+/g, '. ').trim();
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.lang = currentLangObj.ttsCode;
-      utterance.rate = 0.92;
-
-      const voices = window.speechSynthesis.getVoices();
-      if (voices && voices.length > 0) {
-        const langPrefix = currentLangObj.ttsCode.slice(0, 2).toLowerCase();
-        let bestVoice = voices.find(v => v.lang.toLowerCase().startsWith(langPrefix) || v.lang.toLowerCase().includes(langPrefix));
-        if (bestVoice) {
-          utterance.voice = bestVoice;
-        }
-      }
-
-      window.speechSynthesis.speak(utterance);
+  // Handle Vernacular Speech Synthesis (Voice Output) with Toggle Play/Stop
+  const speakText = (text: string, msgId?: string) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      toast.error('Speech synthesis not supported on this device.');
+      return;
     }
+
+    // TOGGLE FEATURE: If currently speaking this message, stop speech immediately
+    if (activeSpeakingId === msgId && window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+      setActiveSpeakingId(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    if (msgId) setActiveSpeakingId(msgId);
+
+    const cleanText = text.replace(/[*#_`]/g, '').replace(/\n+/g, '. ').trim();
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+
+    const targetLangCode = currentLangObj.ttsCode || 'en-US';
+    utterance.lang = targetLangCode;
+    utterance.rate = 0.92;
+
+    // Load available browser voices and filter for Bengali / target vernacular voice
+    const voices = window.speechSynthesis.getVoices();
+    if (voices && voices.length > 0) {
+      const langPrefix = targetLangCode.slice(0, 2).toLowerCase();
+      let bestVoice = voices.find(v => 
+        v.lang.toLowerCase().startsWith(langPrefix) || 
+        v.lang.toLowerCase().includes(langPrefix) ||
+        (langPrefix === 'bn' && (v.name.toLowerCase().includes('bengali') || v.name.toLowerCase().includes('bangla')))
+      );
+      if (bestVoice) {
+        utterance.voice = bestVoice;
+      }
+    }
+
+    utterance.onend = () => setActiveSpeakingId(null);
+    utterance.onerror = () => setActiveSpeakingId(null);
+
+    window.speechSynthesis.speak(utterance);
   };
 
   const handleClose = () => {
-    if ('speechSynthesis' in window) {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
+    setActiveSpeakingId(null);
     setIsOpen(false);
   };
 
@@ -219,9 +267,10 @@ export const Chatbot = () => {
       botReplyText = generateOfflineClinicalReply(textToSend, globalLang || 'en-US');
     }
 
-    const botMessage: Message = { id: (Date.now() + 1).toString(), sender: 'bot', text: botReplyText };
+    const botMessageId = (Date.now() + 1).toString();
+    const botMessage: Message = { id: botMessageId, sender: 'bot', text: botReplyText };
     setMessages(prev => [...prev, botMessage]);
-    speakText(botReplyText); // Auto-speak response in target vernacular language
+    speakText(botReplyText, botMessageId); // Auto-speak response in target vernacular language
     setLoading(false);
   };
 
@@ -289,32 +338,39 @@ export const Chatbot = () => {
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                {msg.sender === 'bot' && (
-                  <button 
-                    onClick={() => speakText(msg.text)} 
-                    aria-label="Read text aloud in selected vernacular language"
-                    className="mr-2 self-end mb-1 p-1.5 rounded-full bg-slate-800 text-slate-400 hover:text-emerald-400 hover:bg-slate-700 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer"
-                    title={`Read Aloud (${currentLangObj.name})`}
-                  >
-                    <Volume2 size={14} aria-hidden="true" />
-                  </button>
-                )}
+            {messages.map((msg) => {
+              const isSpeakingThis = activeSpeakingId === msg.id;
+              return (
                 <div
-                  className={`max-w-[75%] p-3 text-sm leading-relaxed whitespace-pre-wrap ${
-                    msg.sender === 'user'
-                      ? 'bg-emerald-600 text-white rounded-2xl rounded-br-sm shadow-md'
-                      : 'bg-slate-800 text-slate-200 border border-white/5 rounded-2xl rounded-bl-sm shadow-md'
-                  }`}
+                  key={msg.id}
+                  className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  {msg.text}
+                  {msg.sender === 'bot' && (
+                    <button 
+                      onClick={() => speakText(msg.text, msg.id)} 
+                      aria-label={isSpeakingThis ? "Stop reading aloud" : "Read text aloud in selected vernacular language"}
+                      className={`mr-2 self-end mb-1 p-1.5 rounded-full transition-all focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer ${
+                        isSpeakingThis 
+                          ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50 animate-pulse' 
+                          : 'bg-slate-800 text-slate-400 hover:text-emerald-400 hover:bg-slate-700'
+                      }`}
+                      title={isSpeakingThis ? "Click to Stop Reading" : `Read Aloud (${currentLangObj.name})`}
+                    >
+                      {isSpeakingThis ? <VolumeX size={14} aria-hidden="true" /> : <Volume2 size={14} aria-hidden="true" />}
+                    </button>
+                  )}
+                  <div
+                    className={`max-w-[75%] p-3 text-sm leading-relaxed whitespace-pre-wrap ${
+                      msg.sender === 'user'
+                        ? 'bg-emerald-600 text-white rounded-2xl rounded-br-sm shadow-md'
+                        : 'bg-slate-800 text-slate-200 border border-white/5 rounded-2xl rounded-bl-sm shadow-md'
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {loading && (
               <div className="flex justify-start">
                 <div className="bg-slate-800 border border-white/5 rounded-2xl rounded-bl-sm p-3 flex items-center space-x-2">
