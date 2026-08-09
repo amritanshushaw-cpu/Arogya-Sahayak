@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Mic, Save, Activity } from 'lucide-react';
+import { ArrowLeft, Mic, Save, Activity, Volume2, VolumeX } from 'lucide-react';
 import { calculateRisks, RiskScores, ClinicalAssessmentResult } from '@/lib/ml/riskEngine';
 import { RiskCard } from '@/components/RiskCard';
 import { VoiceInput } from '@/components/VoiceInput';
@@ -31,8 +31,53 @@ function ScreeningContent() {
   });
 
   const [assessmentResult, setAssessmentResult] = useState<ClinicalAssessmentResult | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const playAudio = (textToSpeak: string) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      toast.error(t.audioFailed || 'Audio playback is not supported in this browser.');
+      return;
+    }
+
+    if (isPlaying) {
+      window.speechSynthesis.cancel();
+      setIsPlaying(false);
+      return;
+    }
+
+    window.speechSynthesis.cancel(); // Stop any previous speech
+    setIsPlaying(true);
+
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    utterance.lang = language;
+    utterance.rate = 0.9;
+    
+    // Attempt to match voice to local language for offline mode
+    const availableVoices = window.speechSynthesis.getVoices();
+    const targetLangCode = language.split('-')[0];
+    const preferredVoice = availableVoices.find(v => v.lang.startsWith(targetLangCode) || v.lang === language);
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
+
+    utterance.onend = () => setIsPlaying(false);
+    utterance.onerror = () => {
+      setIsPlaying(false);
+      toast.error(t.audioStopped || 'Audio playback stopped.');
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
 
   const handleVitalsExtracted = (vitals: ExtractedVitals, transcript: string) => {
     setFormData(prev => ({
@@ -221,9 +266,22 @@ function ScreeningContent() {
           <div className="glass-panel p-6 rounded-2xl border border-slate-700/50 text-center">
             <h2 className="text-xl font-bold text-slate-200 mb-2">{t.assessmentComplete || 'Assessment Complete'}</h2>
             <p className="text-slate-400 text-sm mb-4">Risk profile has been generated based on the provided vitals {patientId && `for patient ${patientId.slice(0, 6)}`}.</p>
-            <div className="inline-block px-4 py-2 rounded-lg bg-slate-800/50 border border-slate-700">
+            <div className="inline-block px-4 py-2 rounded-lg bg-slate-800/50 border border-slate-700 mb-4">
               <span className="text-sm text-slate-400">Overall Risk Level: </span>
               <span className={`font-bold ${overallRisk?.color}`}>{overallRisk?.level}</span>
+            </div>
+            <div>
+              <button 
+                onClick={() => playAudio(`${t.riskAssessment || 'Risk Level'}: ${overallRisk?.level}.`)}
+                className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all shadow-lg ${
+                  isPlaying 
+                    ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50 hover:bg-rose-500/30 shadow-rose-500/20' 
+                    : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/50 hover:bg-indigo-500/30 shadow-indigo-500/20'
+                }`}
+              >
+                {isPlaying ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                <span>{isPlaying ? 'Stop Audio' : (t.listen || 'Listen to Result')}</span>
+              </button>
             </div>
           </div>
 

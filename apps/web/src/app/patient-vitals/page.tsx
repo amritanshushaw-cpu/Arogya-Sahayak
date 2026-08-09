@@ -332,38 +332,39 @@ export default function PatientDashboard() {
     const dia = Number(vitalsForm.bp_diastolic);
     const temp = Number(vitalsForm.temperature);
     
+    const t = UI_TRANS[language] || UI_TRANS['en-US'];
+
     if (lowerTranscript.includes('sugar') || lowerTranscript.includes('diabetes') || glucose > 140) {
       riskScore += 30;
-      conditions.push('Elevated Blood Sugar (Diabetes Risk)');
-      advice.push('Reduce sugar intake and schedule a fasting blood glucose test.');
+      conditions.push(t.condBP); 
     }
     if (lowerTranscript.includes('pressure') || lowerTranscript.includes('bp') || sys > 140 || dia > 90) {
       riskScore += 30;
-      conditions.push('High Blood Pressure (Hypertension)');
-      advice.push('Reduce salt intake, monitor BP daily, and avoid stress.');
+      conditions.push(t.condBP);
+      advice.push(t.advBP);
     }
     if (lowerTranscript.includes('fever') || lowerTranscript.includes('temperature') || temp > 99.5) {
       riskScore += 20;
-      conditions.push('Fever / Possible Infection');
-      advice.push('Rest, stay hydrated, and monitor temperature.');
+      conditions.push(t.condFever);
+      advice.push(t.advFever);
     }
     if (lowerTranscript.includes('chest') || lowerTranscript.includes('pain') || lowerTranscript.includes('breath')) {
       riskScore += 40;
-      conditions.push('Cardiovascular Symptoms');
-      advice.push('URGENT: Seek immediate medical attention at the nearest PHC.');
+      conditions.push(t.condCVD);
+      advice.push(t.advCVD);
     }
     
-    let level = 'LOW RISK';
+    let level = t.lowRisk;
     let alertLevel = 'GREEN_ALERT';
-    let summary = 'Your vitals appear stable based on the provided parameters.';
+    let summary = t.stableSummary;
     if (riskScore >= 50) {
-      level = 'HIGH RISK (RED ALERT)';
+      level = t.highRisk;
       alertLevel = 'RED_ALERT';
-      summary = 'Critical abnormalities detected. Immediate medical consultation is required.';
+      summary = t.criticalSummary;
     } else if (riskScore > 0) {
-      level = 'MODERATE RISK (YELLOW ALERT)';
+      level = t.modRisk;
       alertLevel = 'YELLOW_ALERT';
-      summary = 'Some irregularities found. Please schedule a routine checkup soon.';
+      summary = t.modSummary;
     }
     
     let finalDiagnosisText = '';
@@ -395,43 +396,21 @@ export default function PatientDashboard() {
     } catch (error) {
       console.error('Online LLM failed, using offline math model', error);
       
-      const langName = LANGUAGES.find(l => l.code === language)?.name || 'English';
-      
-      const diagnosisText = `[Offline Diagnostic Model]
+      const diagnosisText = `${t.offlineHeader}
 
-Risk Assessment: ${level}
-Summary: ${summary}
+${t.riskAssessment}: ${level}
+${t.summaryLabel}: ${summary}
 
-Detected Flags:
-${conditions.length > 0 ? conditions.map(c => '- ' + c).join('\n') : '- No major flags detected in basic parameters.'}
+${t.detectedFlags}:
+${conditions.length > 0 ? conditions.map((c: string) => '- ' + c).join('\n') : t.noMajorFlags}
 
-Recommended Action:
-${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healthy diet and regular exercise.'}
+${t.recommendedAction}:
+${advice.length > 0 ? advice.map((a: string) => '- ' + a).join('\n') : t.maintainDiet}
 
-(Note: Online AI failed: ${error instanceof Error ? error.message : 'Unreachable'}. This is an inbuilt deterministic assessment. Translated for: ${langName})`;
+${t.offlineNote}`;
 
-      // Translate the offline diagnostic string if not English
-      const targetLang = language.split('-')[0];
-      if (targetLang !== 'en') {
-        try {
-          const transUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${targetLang}&dt=t&q=${encodeURIComponent(diagnosisText)}`;
-          const transRes = await fetch(transUrl);
-          const transData = await transRes.json();
-          let translatedText = '';
-          transData[0].forEach((t: any) => {
-            translatedText += t[0];
-          });
-          finalDiagnosisText = translatedText;
-          setAnalysisResult(translatedText);
-        } catch (transErr) {
-          console.error("Translation API failed", transErr);
-          finalDiagnosisText = diagnosisText;
-          setAnalysisResult(diagnosisText);
-        }
-      } else {
-        finalDiagnosisText = diagnosisText;
-        setAnalysisResult(diagnosisText);
-      }
+      finalDiagnosisText = diagnosisText;
+      setAnalysisResult(diagnosisText);
     }
     
     // SAVE TO BACKEND PHC DATABASE
