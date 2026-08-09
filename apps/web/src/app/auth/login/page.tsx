@@ -182,16 +182,25 @@ function LoginForm() {
           router.push('/dashboard');
         }
       } else {
-        // Fallback demo auth if offline
-        setAuth('demo-phc-token', { id: selectedPhcId || 'phc-1', name: phone || 'PHC Center', role: role } as any);
-        toast.success(`Signed in as ${role.toUpperCase()} Center!`);
+      // Fallback demo auth if offline
+      const fallbackName = role === 'patient' ? (phone || 'Patient') : (role === 'asha' ? 'ASHA Worker' : (phone || 'PHC Center'));
+      setAuth('demo-offline-token', { id: selectedPhcId || 'demo-1', name: fallbackName, role: role } as any);
+      toast.success(`Signed in offline as ${role.toUpperCase()}!`);
+      if (role === 'patient') {
+        router.push('/patient-vitals');
+      } else {
         router.push('/dashboard');
       }
     } catch (error) {
       console.warn('Network error fallback login:', error);
-      setAuth('demo-phc-token', { id: selectedPhcId || 'phc-1', name: phone || 'PHC Center', role: role } as any);
-      toast.success(`Signed in as ${role.toUpperCase()} Center!`);
-      router.push('/dashboard');
+      const fallbackName = role === 'patient' ? (phone || 'Patient') : (role === 'asha' ? 'ASHA Worker' : (phone || 'PHC Center'));
+      setAuth('demo-offline-token', { id: selectedPhcId || 'demo-1', name: fallbackName, role: role } as any);
+      toast.success(`Signed in offline as ${role.toUpperCase()}!`);
+      if (role === 'patient') {
+        router.push('/patient-vitals');
+      } else {
+        router.push('/dashboard');
+      }
     } finally {
       setLoading(false);
     }
