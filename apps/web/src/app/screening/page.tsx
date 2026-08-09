@@ -10,14 +10,14 @@ import { VoiceInput } from '@/components/VoiceInput';
 import { ExtractedVitals } from '@/lib/ml/nerParser';
 import toast, { Toaster } from 'react-hot-toast';
 import { useAuthStore } from '@/lib/authStore';
-import { UI_TRANS } from '@/lib/translations';
+import { UI_TRANS, getUITrans } from '@/lib/translations';
 
 function ScreeningContent() {
   const searchParams = useSearchParams();
   const patientId = searchParams.get('patientId');
   const router = useRouter();
   const { language } = useAuthStore();
-  const t = UI_TRANS[language] || UI_TRANS['en-US'];
+  const t = getUITrans(language);
 
   const [formData, setFormData] = useState({
     systolicBP: '',

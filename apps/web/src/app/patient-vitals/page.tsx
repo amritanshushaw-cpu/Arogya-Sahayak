@@ -7,12 +7,16 @@ import toast from 'react-hot-toast';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
-import { LANGUAGES, UI_TRANS } from '@/lib/translations';
+import { LANGUAGES, UI_TRANS, getUITrans } from '@/lib/translations';
+import { LanguageSelector } from '@/components/LanguageSelector';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { db, routePatientToNearestPHCDatabase } from '@/lib/db';
 import { syncManager } from '@/lib/sync';
 
 export default function PatientDashboard() {
   const { token, user, language, setLanguage } = useAuthStore();
+  const t = getUITrans(language);
   const [step, setStep] = useState<'info' | 'vitals' | 'detection'>('info');
 
   // Info State
@@ -506,27 +510,38 @@ ${t.offlineNote}`;
 
       <div className="w-full max-w-4xl relative z-10">
         
+        {/* Top Header Bar with Language Selector & Back Button */}
+        <div className="flex items-center justify-between mb-4 px-1">
+          <Link href="/dashboard" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm font-medium">
+            <ArrowLeft className="w-4 h-4" /> {t.backDashboard}
+          </Link>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 font-medium hidden sm:inline">{t.languageLabel || 'Language'}:</span>
+            <LanguageSelector />
+          </div>
+        </div>
+
         {/* Navigation Tabs */}
         <div className="flex bg-white/5 backdrop-blur-md rounded-2xl p-2 mb-6 border border-white/10 gap-2">
           <button 
             onClick={() => setStep('info')}
             className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all ${step === 'info' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
           >
-            1. {UI_TRANS[language]?.tab1 || UI_TRANS['en-US'].tab1}
+            1. {t.tab1}
           </button>
           <button 
             onClick={() => infoSaved && setStep('vitals')}
             disabled={!infoSaved}
             className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all ${step === 'vitals' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25' : infoSaved ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 cursor-not-allowed'}`}
           >
-            2. {UI_TRANS[language]?.tab2 || UI_TRANS['en-US'].tab2}
+            2. {t.tab2}
           </button>
           <button 
             onClick={() => (infoSaved && (transcript || vitalsForm.temperature)) && setStep('detection')}
             disabled={!infoSaved || (!transcript && !vitalsForm.temperature)}
             className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all ${step === 'detection' ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/25' : infoSaved && (transcript || vitalsForm.temperature) ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 cursor-not-allowed'}`}
           >
-            3. {UI_TRANS[language]?.tab3 || UI_TRANS['en-US'].tab3}
+            3. {t.tab3}
           </button>
         </div>
 
@@ -538,15 +553,15 @@ ${t.offlineNote}`;
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <header className="mb-8">
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                  <FileText className="w-6 h-6 text-blue-400" /> {UI_TRANS[language]?.header1 || UI_TRANS['en-US'].header1}
+                  <FileText className="w-6 h-6 text-blue-400" /> {t.header1}
                 </h2>
-                <p className="text-slate-400">{UI_TRANS[language]?.sub1 || UI_TRANS['en-US'].sub1}</p>
+                <p className="text-slate-400">{t.sub1}</p>
               </header>
 
               <form onSubmit={handleInfoSubmit} className="space-y-4 max-w-2xl mx-auto">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm text-slate-400">{UI_TRANS[language]?.age || UI_TRANS['en-US'].age}</label>
+                    <label className="text-sm text-slate-400">{t.age}</label>
                     <input 
                       type="number" 
                       required
@@ -556,21 +571,21 @@ ${t.offlineNote}`;
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm text-slate-400">{UI_TRANS[language]?.gender || UI_TRANS['en-US'].gender}</label>
+                    <label className="text-sm text-slate-400">{t.gender}</label>
                     <select 
                       value={infoForm.gender}
                       onChange={e => setInfoForm({...infoForm, gender: e.target.value})}
                       className="w-full bg-slate-900 border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-blue-500"
                     >
-                      <option>{UI_TRANS[language]?.male || UI_TRANS['en-US'].male}</option>
-                      <option>{UI_TRANS[language]?.female || UI_TRANS['en-US'].female}</option>
-                      <option>{UI_TRANS[language]?.other || UI_TRANS['en-US'].other}</option>
+                      <option>{t.male}</option>
+                      <option>{t.female}</option>
+                      <option>{t.other}</option>
                     </select>
                   </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-sm text-slate-400">{UI_TRANS[language]?.location || UI_TRANS['en-US'].location}</label>
+                  <label className="text-sm text-slate-400">{t.location}</label>
                   <div className="flex gap-2">
                     <input 
                       type="text" 
@@ -578,7 +593,7 @@ ${t.offlineNote}`;
                       value={infoForm.village}
                       onChange={e => setInfoForm({...infoForm, village: e.target.value})}
                       className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-blue-500"
-                      placeholder={UI_TRANS[language]?.locPlaceholder || UI_TRANS['en-US'].locPlaceholder}
+                      placeholder={t.locPlaceholder}
                     />
                     <button 
                       type="button" 
@@ -587,16 +602,16 @@ ${t.offlineNote}`;
                       className="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded-xl flex items-center gap-2 transition-colors disabled:opacity-50"
                     >
                       {locating ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
-                      {locating ? UI_TRANS[language]?.locating || UI_TRANS['en-US'].locating : UI_TRANS[language]?.getLocation || UI_TRANS['en-US'].getLocation}
+                      {locating ? t.locating : t.getLocation}
                     </button>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm text-slate-400">{UI_TRANS[language]?.history || UI_TRANS['en-US'].history}</label>
+                  <label className="text-sm text-slate-400">{t.history}</label>
                   <textarea 
                     rows={3}
-                    placeholder={UI_TRANS[language]?.historyPlaceholder || UI_TRANS['en-US'].historyPlaceholder}
+                    placeholder={t.historyPlaceholder}
                     value={infoForm.familyHistory}
                     onChange={e => setInfoForm({...infoForm, familyHistory: e.target.value})}
                     className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-blue-500 resize-none"
@@ -604,7 +619,7 @@ ${t.offlineNote}`;
                 </div>
 
                 <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition-colors mt-6">
-                  {UI_TRANS[language]?.saveAndContinue || UI_TRANS['en-US'].saveAndContinue}
+                  {t.saveAndContinue}
                 </button>
               </form>
             </div>
@@ -616,12 +631,10 @@ ${t.offlineNote}`;
               <header className="mb-6 flex justify-between items-end">
                 <div>
                   <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <HeartPulse className="w-6 h-6 text-pink-400" /> {UI_TRANS[language]?.header2 || UI_TRANS['en-US'].header2}
+                    <HeartPulse className="w-6 h-6 text-pink-400" /> {t.header2}
                   </h2>
-                  <p className="text-slate-400">{UI_TRANS[language]?.sub2 || UI_TRANS['en-US'].sub2}</p>
+                  <p className="text-slate-400">{t.sub2}</p>
                 </div>
-                
-
               </header>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -632,7 +645,7 @@ ${t.offlineNote}`;
                     <textarea 
                       value={transcript}
                       onChange={(e) => setTranscript(e.target.value)}
-                      placeholder={UI_TRANS[language]?.recordPlaceholder || UI_TRANS['en-US'].recordPlaceholder}
+                      placeholder={t.recordPlaceholder}
                       className="w-full h-full bg-transparent text-white resize-none outline-none placeholder:text-slate-500"
                     />
                   </div>
@@ -646,7 +659,7 @@ ${t.offlineNote}`;
                           : 'bg-white/10 text-white hover:bg-white/20'
                       }`}
                     >
-                      {isRecording ? <><MicOff className="w-5 h-5" /> {UI_TRANS[language]?.stop || UI_TRANS['en-US'].stop}</> : <><Mic className="w-5 h-5" /> {UI_TRANS[language]?.record || UI_TRANS['en-US'].record}</>}
+                      {isRecording ? <><MicOff className="w-5 h-5" /> {t.stop}</> : <><Mic className="w-5 h-5" /> {t.record}</>}
                     </button>
                     <button 
                       onClick={autofillVitals}
@@ -654,7 +667,7 @@ ${t.offlineNote}`;
                       className="flex-1 bg-blue-600/20 text-blue-400 border border-blue-500/50 hover:bg-blue-600/30 py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all disabled:opacity-50"
                     >
                       {isAutofilling ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-                      {UI_TRANS[language]?.autofill || UI_TRANS['en-US'].autofill}
+                      {t.autofill}
                     </button>
                   </div>
                 </div>
@@ -662,35 +675,35 @@ ${t.offlineNote}`;
                 {/* Vitals Parameters Grid */}
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 grid grid-cols-2 gap-4 content-start">
                   <div className="space-y-1">
-                    <label className="text-xs text-slate-400">{UI_TRANS[language]?.sys || UI_TRANS['en-US'].sys}</label>
+                    <label className="text-xs text-slate-400">{t.sys}</label>
                     <input type="number" name="bp_systolic" value={vitalsForm.bp_systolic} onChange={handleVitalChange} placeholder="120" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-slate-400">{UI_TRANS[language]?.dia || UI_TRANS['en-US'].dia}</label>
+                    <label className="text-xs text-slate-400">{t.dia}</label>
                     <input type="number" name="bp_diastolic" value={vitalsForm.bp_diastolic} onChange={handleVitalChange} placeholder="80" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-slate-400">{UI_TRANS[language]?.glucose || UI_TRANS['en-US'].glucose}</label>
+                    <label className="text-xs text-slate-400">{t.glucose}</label>
                     <input type="number" name="blood_glucose" value={vitalsForm.blood_glucose} onChange={handleVitalChange} placeholder="95" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-slate-400">{UI_TRANS[language]?.temp || UI_TRANS['en-US'].temp}</label>
+                    <label className="text-xs text-slate-400">{t.temp}</label>
                     <input type="number" name="temperature" value={vitalsForm.temperature} onChange={handleVitalChange} placeholder="98.6" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-slate-400">{UI_TRANS[language]?.pulse || UI_TRANS['en-US'].pulse}</label>
+                    <label className="text-xs text-slate-400">{t.pulse}</label>
                     <input type="number" name="pulse" value={vitalsForm.pulse} onChange={handleVitalChange} placeholder="72" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-slate-400">{UI_TRANS[language]?.spo2 || UI_TRANS['en-US'].spo2}</label>
+                    <label className="text-xs text-slate-400">{t.spo2}</label>
                     <input type="number" name="spo2" value={vitalsForm.spo2} onChange={handleVitalChange} placeholder="98" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-slate-400">{UI_TRANS[language]?.weight || UI_TRANS['en-US'].weight}</label>
+                    <label className="text-xs text-slate-400">{t.weight}</label>
                     <input type="number" name="weight" value={vitalsForm.weight} onChange={handleVitalChange} placeholder="70" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-slate-400">{UI_TRANS[language]?.height || UI_TRANS['en-US'].height}</label>
+                    <label className="text-xs text-slate-400">{t.height}</label>
                     <input type="number" name="height" value={vitalsForm.height} onChange={handleVitalChange} placeholder="170" className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-white" />
                   </div>
                 </div>
@@ -699,9 +712,9 @@ ${t.offlineNote}`;
 
               <button 
                 onClick={submitVitals}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 rounded-xl font-medium flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/25 mt-auto"
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 rounded-xl font-medium flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/25 mt-auto cursor-pointer"
               >
-                {UI_TRANS[language]?.analyzeBtn || UI_TRANS['en-US'].analyzeBtn} <Send className="w-5 h-5" />
+                {t.analyzeBtn} <Send className="w-5 h-5" />
               </button>
             </div>
           )}
@@ -712,9 +725,9 @@ ${t.offlineNote}`;
               <header className="mb-6 flex justify-between items-center">
                 <div>
                   <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <Activity className="w-6 h-6 text-green-400" /> {UI_TRANS[language]?.header3 || UI_TRANS['en-US'].header3}
+                    <Activity className="w-6 h-6 text-green-400" /> {t.header3}
                   </h2>
-                  <p className="text-slate-400">{UI_TRANS[language]?.sub3 || UI_TRANS['en-US'].sub3}</p>
+                  <p className="text-slate-400">{t.sub3}</p>
                 </div>
                 {!isAnalyzing && analysisResult && (
                   <button 
@@ -726,7 +739,7 @@ ${t.offlineNote}`;
                     }`}
                   >
                     {isSpeaking ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                    <span>{isSpeaking ? 'Stop Audio' : (UI_TRANS[language]?.listen || UI_TRANS['en-US'].listen)}</span>
+                    <span>{isSpeaking ? 'Stop Audio' : t.listen}</span>
                   </button>
                 )}
               </header>
@@ -737,8 +750,8 @@ ${t.offlineNote}`;
                     <div className="absolute inset-0 border-4 border-blue-500/20 rounded-full" />
                     <div className="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent animate-spin" />
                   </div>
-                  <h3 className="text-lg font-medium text-white mb-2">{UI_TRANS[language]?.analyzing || UI_TRANS['en-US'].analyzing}</h3>
-                  <p className="text-slate-400">{UI_TRANS[language]?.processing || UI_TRANS['en-US'].processing}</p>
+                  <h3 className="text-lg font-medium text-white mb-2">{t.analyzing}</h3>
+                  <p className="text-slate-400">{t.processing}</p>
                 </div>
               ) : (
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 whitespace-pre-wrap text-slate-300 leading-relaxed min-h-[250px] max-h-[550px] overflow-y-auto custom-scrollbar">
@@ -749,9 +762,9 @@ ${t.offlineNote}`;
               {!isAnalyzing && (
                 <button 
                   onClick={() => setStep('vitals')}
-                  className="mt-6 w-full bg-white/10 hover:bg-white/20 text-white py-3 rounded-xl font-medium transition-colors"
+                  className="mt-6 w-full bg-white/10 hover:bg-white/20 text-white py-3 rounded-xl font-medium transition-colors cursor-pointer"
                 >
-                  Record Again
+                  {t.recordPlaceholder ? t.record : 'Record Again'}
                 </button>
               )}
             </div>

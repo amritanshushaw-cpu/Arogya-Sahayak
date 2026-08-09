@@ -7,14 +7,14 @@ import { MapPin, User, Users, Activity, Loader2, ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
-import { UI_TRANS } from '@/lib/translations';
+import { UI_TRANS, getUITrans } from '@/lib/translations';
 import { routePatientToNearestPHCDatabase } from '@/lib/db';
 import { syncManager } from '@/lib/sync';
 
 export default function NewPatientPage() {
   const router = useRouter();
   const { token, language } = useAuthStore();
-  const t = UI_TRANS[language] || UI_TRANS['en-US'];
+  const t = getUITrans(language);
   
   const [formData, setFormData] = useState({
     name: '',
