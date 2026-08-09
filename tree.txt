@@ -1,0 +1,113 @@
+.
+├── .gitignore
+├── apps
+│   ├── server
+│   │   ├── .env.example
+│   │   ├── .gitignore
+│   │   ├── data
+│   │   │   └── .gitkeep
+│   │   ├── knexfile.js
+│   │   ├── package-lock.json
+│   │   ├── package.json
+│   │   └── src
+│   │       ├── db
+│   │       │   ├── connection.js
+│   │       │   ├── migrations
+│   │       │   │   └── 001_initial_schema.js
+│   │       │   └── seed.js
+│   │       ├── index.js
+│   │       ├── routes
+│   │       │   ├── abdm.js
+│   │       │   ├── admin.js
+│   │       │   ├── alerts.js
+│   │       │   ├── auth.js
+│   │       │   ├── chat.js
+│   │       │   ├── dashboard.js
+│   │       │   ├── patients.js
+│   │       │   ├── screenings.js
+│   │       │   └── teleconsult.js
+│   │       └── services
+│   │           ├── fhir.js
+│   │           └── sms.js
+│   └── web
+│       ├── .gitignore
+│       ├── next-env.d.ts
+│       ├── next.config.js
+│       ├── package-lock.json
+│       ├── package.json
+│       ├── postcss.config.js
+│       ├── public
+│       │   ├── icons
+│       │   │   └── .gitkeep
+│       │   ├── manifest.json
+│       │   ├── models
+│       │   │   ├── .gitkeep
+│       │   │   ├── kaggle_model_config.json
+│       │   │   └── model_config.json
+│       │   └── sw.js
+│       ├── src
+│       │   ├── app
+│       │   │   ├── admin
+│       │   │   │   └── page.tsx
+│       │   │   ├── auth
+│       │   │   │   ├── login
+│       │   │   │   │   └── page.tsx
+│       │   │   │   └── register
+│       │   │   │       └── page.tsx
+│       │   │   ├── dashboard
+│       │   │   │   ├── layout.tsx
+│       │   │   │   ├── page.tsx
+│       │   │   │   ├── phc
+│       │   │   │   │   └── page.tsx
+│       │   │   │   └── register
+│       │   │   │       └── page.tsx
+│       │   │   ├── globals.css
+│       │   │   ├── layout.tsx
+│       │   │   ├── page.tsx
+│       │   │   ├── patient-vitals
+│       │   │   │   └── page.tsx
+│       │   │   ├── patients
+│       │   │   │   ├── layout.tsx
+│       │   │   │   ├── new
+│       │   │   │   │   └── page.tsx
+│       │   │   │   └── [id]
+│       │   │   │       └── page.tsx
+│       │   │   ├── screening
+│       │   │   │   ├── layout.tsx
+│       │   │   │   └── page.tsx
+│       │   │   └── teleconsult
+│       │   │       ├── layout.tsx
+│       │   │       └── page.tsx
+│       │   ├── components
+│       │   │   ├── Chatbot.tsx
+│       │   │   ├── LanguageSelector.tsx
+│       │   │   ├── NetworkSyncProvider.tsx
+│       │   │   ├── PhcMap.tsx
+│       │   │   ├── ProtectedRoute.tsx
+│       │   │   ├── RiskCard.tsx
+│       │   │   └── VoiceInput.tsx
+│       │   ├── lib
+│       │   │   ├── authStore.ts
+│       │   │   ├── db.ts
+│       │   │   ├── ml
+│       │   │   │   ├── nerParser.ts
+│       │   │   │   └── riskEngine.ts
+│       │   │   ├── offline
+│       │   │   │   ├── deviceId.ts
+│       │   │   │   ├── errorHelper.ts
+│       │   │   │   ├── idMapper.ts
+│       │   │   │   └── serializer.ts
+│       │   │   ├── sync
+│       │   │   │   ├── SyncManager.ts
+│       │   │   │   └── SyncNetworkAdapter.ts
+│       │   │   ├── sync.ts
+│       │   │   └── translations.ts
+│       │   └── store
+│       │       └── useNetworkStore.ts
+│       ├── tailwind.config.js
+│       ├── tsconfig.json
+│       └── tsconfig.tsbuildinfo
+├── README.md
+└── scripts
+    ├── train_kaggle_datasets.py
+    └── train_risk_model.py

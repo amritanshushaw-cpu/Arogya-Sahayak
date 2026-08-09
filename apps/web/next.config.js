@@ -1,3 +1,45 @@
+const withPWA = require('@ducanh2912/next-pwa').default({
+  dest: 'public',
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
+  reloadOnOnline: true,
+  disable: process.env.NODE_ENV === 'development',
+  workboxOptions: {
+    disableDevLogs: true,
+    runtimeCaching: [
+      {
+        urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/.*/i,
+        handler: 'CacheFirst',
+        options: {
+          cacheName: 'cdn-assets',
+          expiration: {
+            maxEntries: 10,
+            maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+          },
+          cacheableResponse: {
+            statuses: [0, 200]
+          }
+        }
+      },
+      {
+        urlPattern: /^\/models\/.*/i,
+        handler: 'CacheFirst',
+        options: {
+          cacheName: 'ml-models',
+          expiration: {
+            maxEntries: 10,
+            maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+          }
+        }
+      },
+      {
+        urlPattern: /\/api\/.*/i,
+        handler: 'NetworkOnly',
+      }
+    ]
+  }
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -27,4 +69,4 @@ const nextConfig = {
     return config;
   },
 };
-module.exports = nextConfig;
+module.exports = withPWA(nextConfig);
