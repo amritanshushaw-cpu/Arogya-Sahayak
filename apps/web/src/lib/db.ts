@@ -144,22 +144,34 @@ export function getPHCDatabase(phcCode: string = 'PATNA_CENTRAL'): ArogyaDatabas
  * Automatically routes and saves a patient record exclusively to their Nearest Available PHC Center's Database
  */
 export async function routePatientToNearestPHCDatabase(
-  patient: Patient,
+  patient: Partial<Patient> & { id: string; name: string },
   lat?: number | null,
   lng?: number | null,
   villageName?: string | null
 ): Promise<{ patient: Patient; routing: NearestPHCResult }> {
   const routing = findNearestPHCCenter(lat, lng, villageName || patient.village);
   const nearestPhc = routing.nearestPHC;
+  const now = new Date();
 
   const enrichedPatient: Patient = {
-    ...patient,
-    lat: lat || undefined,
-    lng: lng || undefined,
+    id: patient.id,
+    serverId: patient.serverId || null,
+    name: patient.name,
+    phone: patient.phone || '',
+    village: patient.village || 'Unassigned',
+    lat: lat || patient.lat,
+    lng: lng || patient.lng,
     assigned_phc_id: nearestPhc.id,
     assigned_phc_code: nearestPhc.phc_code,
     assigned_phc_name: nearestPhc.name,
-    distance_km: routing.distanceKm
+    distance_km: routing.distanceKm,
+    syncStatus: patient.syncStatus || 'pending',
+    deviceId: patient.deviceId || null,
+    createdAt: patient.createdAt || now,
+    updatedAt: patient.updatedAt || now,
+    lastSyncTimestamp: patient.lastSyncTimestamp || null,
+    family_history: patient.family_history || null,
+    lifestyle: patient.lifestyle || null
   };
 
   // Save to system DB

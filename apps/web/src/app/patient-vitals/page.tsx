@@ -8,6 +8,8 @@ import toast from 'react-hot-toast';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
 import { LANGUAGES, UI_TRANS } from '@/lib/translations';
+import { db, routePatientToNearestPHCDatabase } from '@/lib/db';
+import { syncManager } from '@/lib/sync';
 
 export default function PatientDashboard() {
   const { token, user, language, setLanguage } = useAuthStore();
@@ -224,15 +226,15 @@ export default function PatientDashboard() {
       return;
     }
 
-    try {
-      const payload = {
-        name: user?.name || 'Patient',
-        age: Number(infoForm.age),
-        gender: infoForm.gender,
-        village: infoForm.village,
-        family_history: infoForm.familyHistory
-      };
+    const payload = {
+      name: user?.name || 'Patient',
+      age: Number(infoForm.age),
+      gender: infoForm.gender,
+      village: infoForm.village,
+      family_history: infoForm.familyHistory
+    };
 
+    try {
       const res = await fetch(`${apiUrl}/api/patients`, {
         method: 'POST',
         headers: {
@@ -248,13 +250,35 @@ export default function PatientDashboard() {
         toast.success('Information saved successfully!');
         setInfoSaved(true);
         setStep('vitals');
-      } else {
-        toast.error('Failed to save information');
+        return;
       }
     } catch (error) {
-      console.error(error);
-      toast.error('Network error');
+      console.warn('Network offline, saving patient locally to nearest PHC database:', error);
     }
+
+    // Offline Mode Fallback
+    const offlineId = `LOCAL-${Date.now()}`;
+    const offlinePatient = {
+      id: offlineId,
+      name: payload.name,
+      age: payload.age,
+      gender: payload.gender,
+      village: payload.village,
+      family_history: payload.family_history ? { note: payload.family_history } : null,
+      syncStatus: 'pending' as const
+    };
+
+    try {
+      await routePatientToNearestPHCDatabase(offlinePatient);
+      await syncManager.enqueue('create_patient', offlinePatient);
+      toast.success('⚡ Offline Mode: Information saved to local PHC database!', { icon: '⚡' });
+    } catch (dbErr) {
+      console.error('Dexie save warning:', dbErr);
+    }
+
+    setCreatedPatientId(offlineId);
+    setInfoSaved(true);
+    setStep('vitals');
   };
 
   const toggleRecording = () => {
@@ -413,41 +437,59 @@ ${t.offlineNote}`;
       setAnalysisResult(diagnosisText);
     }
     
-    // SAVE TO BACKEND PHC DATABASE
+    // SAVE TO BACKEND / OFFLINE PHC DATABASE
     if (createdPatientId) {
+      const screeningPayload = {
+        id: `SCR-${Date.now()}`,
+        patient_id: createdPatientId,
+        bp_systolic: sys || 0,
+        bp_diastolic: dia || 0,
+        blood_glucose: glucose || 0,
+        temperature: temp || 0,
+        pulse: Number(vitalsForm.pulse) || 0,
+        spo2: Number(vitalsForm.spo2) || 0,
+        weight: Number(vitalsForm.weight) || 0,
+        height: Number(vitalsForm.height) || 0,
+        risk_level: alertLevel,
+        risk_explanation: JSON.stringify({ ai_summary: finalDiagnosisText }),
+        symptoms: transcript ? [transcript] : [],
+        syncStatus: 'pending'
+      };
+
       try {
-        const screeningPayload = {
-          patient_id: createdPatientId,
-          bp_systolic: sys || 0,
-          bp_diastolic: dia || 0,
-          blood_glucose: glucose || 0,
-          temperature: temp || 0,
-          pulse: Number(vitalsForm.pulse) || 0,
-          spo2: Number(vitalsForm.spo2) || 0,
-          weight: Number(vitalsForm.weight) || 0,
-          height: Number(vitalsForm.height) || 0,
-          risk_level: alertLevel,
-          risk_explanation: JSON.stringify({ ai_summary: finalDiagnosisText }),
-          symptoms: transcript ? [transcript] : []
-        };
         const headers: any = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
         
-        await fetch(`${apiUrl}/api/screenings`, {
+        const sRes = await fetch(`${apiUrl}/api/screenings`, {
           method: 'POST',
           headers,
           body: JSON.stringify(screeningPayload)
         });
         
-        if (alertLevel !== 'GREEN_ALERT') {
-          toast.success('Alert routed to nearest PHC automatically.');
+        if (sRes.ok) {
+          if (alertLevel !== 'GREEN_ALERT') {
+            toast.success('Alert routed to nearest PHC automatically.');
+          }
+          setIsAnalyzing(false);
+          setStep('detection');
+          return;
         }
       } catch (err) {
-        console.error('Failed to sync to PHC', err);
+        console.warn('Network offline, saving screening to local IndexedDB:', err);
+      }
+
+      // Offline Mode Fallback
+      try {
+        await db.screenings.add(screeningPayload as any);
+        await syncManager.enqueue('create_screening', screeningPayload);
+        toast.success('⚡ Offline Mode: Screening saved locally! Will sync when online.', { icon: '⚡' });
+      } catch (dbErr) {
+        console.error('Offline screening save error:', dbErr);
       }
     }
-    
+
     setIsAnalyzing(false);
+    setStep('detection');
   };
 
   const handleVitalChange = (e: React.ChangeEvent<HTMLInputElement>) => {

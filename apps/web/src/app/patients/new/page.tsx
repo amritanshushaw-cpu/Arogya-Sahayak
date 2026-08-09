@@ -8,6 +8,8 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 
 import { UI_TRANS } from '@/lib/translations';
+import { routePatientToNearestPHCDatabase } from '@/lib/db';
+import { syncManager } from '@/lib/sync';
 
 export default function NewPatientPage() {
   const router = useRouter();
@@ -77,17 +79,17 @@ export default function NewPatientPage() {
     e.preventDefault();
     setLoading(true);
 
+    const payload = {
+      name: formData.name,
+      age: Number(formData.age),
+      gender: formData.gender,
+      village: formData.location,
+      family_history: formData.familyHistory
+    };
+
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
       
-      const payload = {
-        name: formData.name,
-        age: Number(formData.age),
-        gender: formData.gender,
-        village: formData.location, // Store location as village for now
-        family_history: formData.familyHistory
-      };
-
       const res = await fetch(`${apiUrl}/api/patients`, {
         method: 'POST',
         headers: {
@@ -97,17 +99,36 @@ export default function NewPatientPage() {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
-
       if (res.ok) {
+        const data = await res.json();
         toast.success('Patient registered successfully');
-        router.push(`/patients/${data.id || data._id || 'new'}`); // Fallback in case ID is slightly different in actual API
-      } else {
-        toast.error(data.message || 'Failed to register patient');
+        router.push(`/patients/${data.id || data._id || 'new'}`);
+        return;
       }
     } catch (error) {
-      console.error(error);
-      toast.error('Network error. Please try again.');
+      console.warn('Network offline, saving patient to local PHC database:', error);
+    }
+
+    // Offline Mode Fallback
+    const offlineId = `LOCAL-${Date.now()}`;
+    const offlinePatient = {
+      id: offlineId,
+      name: payload.name,
+      age: payload.age,
+      gender: payload.gender,
+      village: payload.village,
+      family_history: payload.family_history ? { note: payload.family_history } : null,
+      syncStatus: 'pending' as const
+    };
+
+    try {
+      await routePatientToNearestPHCDatabase(offlinePatient);
+      await syncManager.enqueue('create_patient', offlinePatient);
+      toast.success('⚡ Offline Mode: Patient registered locally to nearest PHC database!', { icon: '⚡' });
+      router.push(`/patients/${offlineId}`);
+    } catch (dbErr) {
+      console.error('Dexie save error:', dbErr);
+      toast.error('Failed to save record locally');
     } finally {
       setLoading(false);
     }
