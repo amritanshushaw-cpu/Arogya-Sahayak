@@ -1,5 +1,7 @@
 # Arogya Sahayak (आरोग्य सहायक)
 
+**Live App:** [https://arogaya-sahayak.vercel.app](https://arogaya-sahayak.vercel.app) | **GitHub Repository:** [https://github.com/amritanshushaw-cpu/Arogya-Sahayak](https://github.com/amritanshushaw-cpu/Arogya-Sahayak)
+
 Arogya Sahayak is a state-of-the-art **hybrid Offline-First AI Healthcare Platform** designed specifically for ASHA workers, ANMs, and rural health clinics (PHCs) in India. 
 
 It tackles the core challenges of rural healthcare by providing real-time clinical triage using **Groq's Ultra-Fast LPU LLMs**, while seamlessly falling back to an in-browser deterministic risk engine when the internet goes out. It features full **12-Language Support** with native Text-to-Speech (Google Translate TTS) and Speech-to-Text (Microphone) integration, breaking down digital and literacy barriers for rural healthcare workers.
@@ -68,6 +70,8 @@ Arogya-Sahayak/
 │       │   └── models/
 │       └── src/
 │           ├── app/
+│           │   ├── chat-api/
+│           │   │   └── route.ts (Native Groq LLM Integration)
 │           │   ├── globals.css
 │           │   ├── layout.tsx
 │           │   ├── page.tsx
