@@ -149,12 +149,12 @@ Seed accounts provided for local and demo environments:
 - **ASHA Worker:** Phone: `9876543210`, Password: `demo123`
 
 ## 👥 Team Members
-- Amritanshu Shaw (@amritanshu-cpu)
-- Atreyee Sarkar (@atreyees-create)
-- Saptak Sarathi Chakraborty (@saptakgg)
+- Amritanshu Shaw ([@amritanshu-cpu](https://github.com/amritanshushaw-cpu))
+- Atreyee Sarkar ([@atreyees-create](https://github.com/atreyees-create))
+- Saptak Sarathi Chakraborty ([@saptakgg](https://github.com/saptakgg))
 
 ### Team Lead
-- Shrinivas Ghosh (@devnivas)
+- Shrinivas Ghosh ([@devnivas](https://github.com/devnivas))
 
 ---
 
