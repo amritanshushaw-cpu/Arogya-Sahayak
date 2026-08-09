@@ -67,7 +67,70 @@ interface PHC {
   status?: string;
 }
 
+function renderFormattedBadges(rawData: any, defaultMsg: string = 'None flagged') {
+  if (!rawData) return <span className="text-slate-400 font-sans italic text-xs">{defaultMsg}</span>;
+
+  let parsed = rawData;
+  if (typeof rawData === 'string') {
+    try {
+      parsed = JSON.parse(rawData);
+    } catch (e) {
+      parsed = rawData;
+    }
+  }
+
+  if (typeof parsed === 'object' && parsed !== null) {
+    if (Array.isArray(parsed)) {
+      if (parsed.length === 0) return <span className="text-slate-400 font-sans italic text-xs">{defaultMsg}</span>;
+      return (
+        <div className="flex flex-wrap gap-1.5 mt-1.5">
+          {parsed.map((item, idx) => (
+            <span key={idx} className="bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 px-2.5 py-1 rounded-lg text-xs font-medium capitalize font-sans flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+              {String(item)}
+            </span>
+          ))}
+        </div>
+      );
+    }
+
+    const activeEntries = Object.entries(parsed).filter(
+      ([_, val]) => val === true || (typeof val === 'string' && val.trim().length > 0) || (typeof val === 'number' && val > 0)
+    );
+    
+    if (activeEntries.length === 0) {
+      return <span className="text-slate-400 font-sans italic text-xs">{defaultMsg}</span>;
+    }
+
+    return (
+      <div className="flex flex-wrap gap-1.5 mt-1.5">
+        {activeEntries.map(([key, val]) => {
+          const formattedKey = key
+            .replace(/_/g, ' ')
+            .replace(/([A-Z])/g, ' $1')
+            .toLowerCase()
+            .replace(/\b\w/g, c => c.toUpperCase());
+            
+          const displayLabel = typeof val === 'boolean' 
+            ? formattedKey 
+            : `${formattedKey}: ${val}`;
+            
+          return (
+            <span key={key} className="bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 px-2.5 py-1 rounded-lg text-xs font-medium font-sans flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0" />
+              {displayLabel}
+            </span>
+          );
+        })}
+      </div>
+    );
+  }
+
+  return <span className="text-slate-200 font-sans text-xs">{String(parsed)}</span>;
+}
+
 export default function AdminDashboard() {
+
   const [patients, setPatients] = useState<AdminPatient[]>([]);
   const [ashaWorkers, setAshaWorkers] = useState<Worker[]>([]);
   const [phcs, setPhcs] = useState<PHC[]>([]);
@@ -680,24 +743,17 @@ export default function AdminDashboard() {
                 <FileText className="w-4 h-4 text-emerald-400" /> Medical & Family History
               </h4>
 
-              <div className="p-4 bg-black/40 rounded-xl border border-white/5 space-y-2">
+              <div className="p-4 bg-black/40 rounded-xl border border-white/5 space-y-3">
                 <div>
-                  <span className="text-slate-400 block">Family Disease History:</span>
-                  <span className="text-slate-200 font-mono-tech">
-                    {selectedPatient.family_history 
-                      ? (typeof selectedPatient.family_history === 'object' ? JSON.stringify(selectedPatient.family_history) : selectedPatient.family_history)
-                      : 'No family medical history flagged.'}
-                  </span>
+                  <span className="text-slate-400 block text-xs mb-0.5">Family Disease History:</span>
+                  {renderFormattedBadges(selectedPatient.family_history, 'No family medical history flagged.')}
                 </div>
-                {selectedPatient.lifestyle && (
-                  <div className="pt-2 border-t border-white/5">
-                    <span className="text-slate-400 block">Lifestyle Factors:</span>
-                    <span className="text-slate-200 font-mono-tech">
-                      {typeof selectedPatient.lifestyle === 'object' ? JSON.stringify(selectedPatient.lifestyle) : selectedPatient.lifestyle}
-                    </span>
-                  </div>
-                )}
+                <div className="pt-2.5 border-t border-white/10">
+                  <span className="text-slate-400 block text-xs mb-0.5">Lifestyle Factors:</span>
+                  {renderFormattedBadges(selectedPatient.lifestyle, 'No lifestyle risk factors flagged.')}
+                </div>
               </div>
+
             </div>
 
             {/* Modal Footer */}
