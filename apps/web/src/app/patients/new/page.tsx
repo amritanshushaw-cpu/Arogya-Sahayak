@@ -7,9 +7,12 @@ import { MapPin, User, Users, Activity, Loader2, ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
+import { UI_TRANS } from '@/lib/translations';
+
 export default function NewPatientPage() {
   const router = useRouter();
-  const { token } = useAuthStore();
+  const { token, language } = useAuthStore();
+  const t = UI_TRANS[language] || UI_TRANS['en-US'];
   
   const [formData, setFormData] = useState({
     name: '',
@@ -115,19 +118,19 @@ export default function NewPatientPage() {
       <div className="max-w-2xl mx-auto mt-10">
         <Link href="/dashboard" className="inline-flex items-center text-gray-400 hover:text-white mb-6 transition-colors">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Dashboard
+          {t.backDashboard}
         </Link>
         
         <div className="p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl">
           <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-            Register New Patient
+            {t.registerPatient}
           </h1>
-          <p className="text-gray-400 mb-8">Enter the patient details below to add them to the system.</p>
+          <p className="text-gray-400 mb-8">{t.registerSub}</p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Full Name</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">{t.fullName}</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
                   <input 
@@ -137,13 +140,13 @@ export default function NewPatientPage() {
                     onChange={handleChange}
                     required
                     className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                    placeholder="Patient Name"
+                    placeholder={t.namePlaceholder}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Age</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">{t.age}</label>
                 <div className="relative">
                   <Activity className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
                   <input 
@@ -155,14 +158,14 @@ export default function NewPatientPage() {
                     min="0"
                     max="120"
                     className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                    placeholder="Age in years"
+                    placeholder={t.age}
                   />
                 </div>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Gender</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1">{t.gender}</label>
               <div className="relative">
                 <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
                 <select 
@@ -171,15 +174,15 @@ export default function NewPatientPage() {
                   onChange={handleChange}
                   className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none"
                 >
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
+                  <option value="Male">{t.male}</option>
+                  <option value="Female">{t.female}</option>
+                  <option value="Other">{t.other}</option>
                 </select>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Location Coordinates</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1">{t.location}</label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
@@ -190,7 +193,7 @@ export default function NewPatientPage() {
                     onChange={handleChange}
                     required
                     className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                    placeholder="Lat, Lng"
+                    placeholder={t.locPlaceholder}
                   />
                 </div>
                 <button
@@ -200,20 +203,20 @@ export default function NewPatientPage() {
                   className="bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 px-4 py-2 rounded-xl hover:bg-emerald-500/30 transition-colors flex items-center justify-center whitespace-nowrap"
                 >
                   {locating ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <MapPin className="w-5 h-5 mr-2" />}
-                  Get Location
+                  {locating ? t.locating : t.getLocation}
                 </button>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Family Disease History</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1">{t.history}</label>
               <textarea 
                 name="familyHistory"
                 value={formData.familyHistory}
                 onChange={handleChange}
                 rows={4}
                 className="w-full bg-black/50 border border-white/10 rounded-xl py-3 px-4 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 resize-none"
-                placeholder="List any known family medical history (e.g. Diabetes, Hypertension...)"
+                placeholder={t.historyPlaceholder}
               />
             </div>
 
@@ -222,7 +225,7 @@ export default function NewPatientPage() {
               disabled={loading}
               className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-medium py-3.5 rounded-xl transition-all shadow-[0_0_15px_rgba(16,185,129,0.4)] flex justify-center items-center mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Register Patient'}
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : t.registerPatient}
             </button>
           </form>
         </div>

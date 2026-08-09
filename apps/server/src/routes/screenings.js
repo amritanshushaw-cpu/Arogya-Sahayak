@@ -72,7 +72,7 @@ module.exports = async function (fastify, opts) {
           if (groqResponse.ok) {
             const groqData = await groqResponse.json();
             screening.risk_explanation = JSON.stringify({
-              source: 'Groq Cloud LLM (llama3-8b)',
+              source: 'Groq Cloud LLM (llama-3.1-70b-versatile)',
               details: groqData.choices[0].message.content
             });
             console.log("[HYBRID AI] Successfully generated real-time medical analysis");

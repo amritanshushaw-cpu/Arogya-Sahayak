@@ -7,65 +7,7 @@ import toast from 'react-hot-toast';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
-const LANGUAGES = [
-  { code: 'en-US', name: 'English' },
-  { code: 'hi-IN', name: 'Hindi (हिंदी)' },
-  { code: 'bn-IN', name: 'Bengali (বাংলা)' },
-  { code: 'te-IN', name: 'Telugu (తెలుగు)' },
-  { code: 'mr-IN', name: 'Marathi (मराठी)' },
-  { code: 'ta-IN', name: 'Tamil (தமிழ்)' },
-  { code: 'gu-IN', name: 'Gujarati (ગુજરાતી)' },
-  { code: 'ur-IN', name: 'Urdu (اردو)' },
-  { code: 'kn-IN', name: 'Kannada (ಕನ್ನಡ)' },
-  { code: 'or-IN', name: 'Odia (ଓଡ଼ିଆ)' },
-  { code: 'ml-IN', name: 'Malayalam (മലയാളം)' },
-  { code: 'pa-IN', name: 'Punjabi (ਪੰਜਾਬੀ)' },
-];
-
-const UI_TRANS: any = {
-  'en-US': { 
-    tab1: 'Basic Information', tab2: 'Vitals & Symptoms', tab3: 'Disease Detection', 
-    save: 'Save Information', analyze: 'Analyze Vitals',
-    header1: 'Patient Details & History', sub1: 'Please provide your details before recording vitals.',
-    age: 'Age', gender: 'Gender', male: 'Male', female: 'Female', other: 'Other',
-    location: 'Village / Location', locPlaceholder: 'Enter location or use auto-fetch',
-    getLocation: 'Get Location', locating: 'Locating...',
-    history: 'Family Disease History', historyPlaceholder: 'E.g. Diabetes, Hypertension in parents...',
-    saveAndContinue: 'Save Information & Continue',
-    header2: 'Patient Vitals', sub2: 'Record symptoms via audio to autofill parameters, or type manually.',
-    languageLabel: 'Audio & UI Language', recordPlaceholder: 'Speak to record your symptoms, or type here...',
-    record: 'Record', stop: 'Stop', autofill: 'Autofill Params',
-    sys: 'BP Systolic', dia: 'BP Diastolic', glucose: 'Glucose (mg/dL)', temp: 'Temp (°F)', pulse: 'Pulse (bpm)', spo2: 'SpO2 (%)', weight: 'Weight (kg)', height: 'Height (cm)',
-    analyzeBtn: 'Analyze Health Risk', header3: 'Disease Detection Results', sub3: 'AI analysis based on your info and vitals.',
-    listen: 'Listen to Result', analyzing: 'Analyzing Health Data', processing: 'Processing with ML models...', audioFailed: 'Audio playback failed.', audioStopped: 'Audio playback stopped.'
-  },
-  'hi-IN': { 
-    tab1: 'मूल जानकारी', tab2: 'वाइटल्स और लक्षण', tab3: 'रोग का पता लगाना', 
-    save: 'जानकारी सहेजें', analyze: 'वाइटल्स का विश्लेषण करें',
-    header1: 'मरीज का विवरण और इतिहास', sub1: 'कृपया वाइटल्स दर्ज करने से पहले अपना विवरण प्रदान करें।',
-    age: 'आयु', gender: 'लिंग', male: 'पुरुष', female: 'महिला', other: 'अन्य',
-    location: 'गाँव / स्थान', locPlaceholder: 'स्थान दर्ज करें',
-    getLocation: 'स्थान प्राप्त करें', locating: 'खोज रहा है...',
-    history: 'पारिवारिक बीमारी का इतिहास', historyPlaceholder: 'उदा. माता-पिता में मधुमेह...',
-    saveAndContinue: 'जानकारी सहेजें और आगे बढ़ें',
-    header2: 'मरीज के वाइटल्स', sub2: 'लक्षण रिकॉर्ड करने के लिए बोलें, या टाइप करें।',
-    languageLabel: 'भाषा', recordPlaceholder: 'अपने लक्षण रिकॉर्ड करने के लिए बोलें...',
-    record: 'रिकॉर्ड करें', stop: 'रोकें', autofill: 'स्वतः भरें',
-    sys: 'बीपी सिस्टोलिक', dia: 'बीपी डायस्टोलिक', glucose: 'ग्लूकोज (mg/dL)', temp: 'तापमान (°F)', pulse: 'पल्स (bpm)', spo2: 'SpO2 (%)', weight: 'वजन (kg)', height: 'ऊंचाई (cm)',
-    analyzeBtn: 'स्वास्थ्य जोखिम का विश्लेषण करें', header3: 'रोग पहचान परिणाम', sub3: 'एआई विश्लेषण।',
-    listen: 'परिणाम सुनें', analyzing: 'विश्लेषण कर रहा है', processing: 'एमएल मॉडल के साथ प्रसंस्करण...', audioFailed: 'ऑडियो विफल रहा।', audioStopped: 'ऑडियो प्लेबैक रोक दिया गया।'
-  },
-  'bn-IN': { tab1: 'প্রাথমিক তথ্য', tab2: 'ভাইটালস ও লক্ষণ', tab3: 'রোগ সনাক্তকরণ', save: 'তথ্য সংরক্ষণ করুন', analyze: 'ভাইটালস বিশ্লেষণ করুন' },
-  'te-IN': { tab1: 'ప్రాథమిక సమాచారం', tab2: 'లక్షణాలు', tab3: 'వ్యాధి గుర్తింపు', save: 'సమాచారం భద్రపరుచు', analyze: 'విశ్లేషించండి' },
-  'mr-IN': { tab1: 'मूलभूत माहिती', tab2: 'लक्षणे', tab3: 'रोगनिदान', save: 'माहिती जतन करा', analyze: 'विश्लेषण करा' },
-  'ta-IN': { tab1: 'அடிப்படை தகவல்', tab2: 'அறிகுறிகள்', tab3: 'நோய் கண்டறிதல்', save: 'தகவலை சேமி', analyze: 'பகுப்பாய்வு செய்' },
-  'gu-IN': { tab1: 'મૂળભૂત માહિતી', tab2: 'લક્ષણો', tab3: 'રોગ નિદાન', save: 'માહિતી સાચવો', analyze: 'વિશ્લેષણ કરો' },
-  'ur-IN': { tab1: 'بنیادی معلومات', tab2: 'علامات', tab3: 'بیماری کی تشخیص', save: 'معلومات محفوظ کریں', analyze: 'تجزیہ کریں' },
-  'kn-IN': { tab1: 'ಮೂಲ ಮಾಹಿತಿ', tab2: 'ಲಕ್ಷಣಗಳು', tab3: 'ರೋಗ ಪತ್ತೆ', save: 'ಮಾಹಿತಿ ಉಳಿಸಿ', analyze: 'ವಿಶ್ಲೇಷಿಸಿ' },
-  'or-IN': { tab1: 'ମୌଳିକ ସୂଚନା', tab2: 'ଲକ୍ଷଣ', tab3: 'ରୋଗ ନିର୍ଣ୍ଣୟ', save: 'ସୂଚନା ସଂରକ୍ଷଣ କରନ୍ତୁ', analyze: 'ବିଶ୍ଳେଷଣ କରନ୍ତୁ' },
-  'ml-IN': { tab1: 'അടിസ്ഥാന വിവരങ്ങൾ', tab2: 'ലക്ഷണങ്ങൾ', tab3: 'രോഗ നിർണയം', save: 'വിവരങ്ങൾ സംരക്ഷിക്കുക', analyze: 'വിശകലനം ചെയ്യുക' },
-  'pa-IN': { tab1: 'ਮੁੱਢਲੀ ਜਾਣਕਾਰੀ', tab2: 'ਲੱਛਣ', tab3: 'ਬਿਮਾਰੀ ਦੀ ਪਛਾਣ', save: 'ਜਾਣਕਾਰੀ ਸੁਰੱਖਿਅਤ ਕਰੋ', analyze: 'ਵਿਸ਼ਲੇਸ਼ਣ ਕਰੋ' },
-};
+import { LANGUAGES, UI_TRANS } from '@/lib/translations';
 
 export default function PatientDashboard() {
   const { token, user, language, setLanguage } = useAuthStore();
@@ -658,20 +600,7 @@ ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healt
                   <p className="text-slate-400">{UI_TRANS[language]?.sub2 || UI_TRANS['en-US'].sub2}</p>
                 </div>
                 
-                <div className="w-64">
-                  <label className="text-sm text-slate-400 flex items-center gap-2 mb-2">
-                    <Globe className="w-4 h-4" /> {UI_TRANS[language]?.languageLabel || UI_TRANS['en-US'].languageLabel}
-                  </label>
-                  <select 
-                    value={language}
-                    onChange={(e) => setLanguage(e.target.value)}
-                    className="w-full bg-slate-900 border border-white/10 rounded-xl p-2 text-sm text-white focus:ring-2 focus:ring-blue-500"
-                  >
-                    {LANGUAGES.map(lang => (
-                      <option key={lang.code} value={lang.code}>{lang.name}</option>
-                    ))}
-                  </select>
-                </div>
+
               </header>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
