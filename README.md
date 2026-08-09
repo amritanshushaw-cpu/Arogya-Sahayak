@@ -145,8 +145,6 @@ npm run dev
 ## 📝 Demo Login Credentials
 Seed accounts provided for local and demo environments:
 - **Admin/PHC:** Phone: `9876543212`, Password: `1234`
-- **Doctor:** Phone: `9876543211`, Password: `1234`
-- **ASHA Worker:** Phone: `9876543210`, Password: `demo123`
 
 ## 👥 Team Members
 - Amritanshu Shaw ([@amritanshu-cpu](https://github.com/amritanshushaw-cpu))
