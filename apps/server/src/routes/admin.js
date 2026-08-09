@@ -112,7 +112,21 @@ async function adminRoutes(fastify, options) {
       return reply.code(500).send({ success: false, error: 'Failed to set up PHC center' });
     }
   });
+
+  // Reset all patient records across the system
+  fastify.post('/reset-patients', async (request, reply) => {
+    try {
+      await db('alerts').del();
+      await db('screenings').del();
+      await db('patients').del();
+      return { success: true, message: 'All patient records reset successfully' };
+    } catch (error) {
+      request.log.error(error);
+      return reply.code(500).send({ success: false, error: 'Failed to reset patient records' });
+    }
+  });
 }
 
 module.exports = adminRoutes;
+
 

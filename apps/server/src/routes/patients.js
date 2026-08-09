@@ -131,4 +131,17 @@ module.exports = async function (fastify, opts) {
       return reply.code(500).send({ error: 'Internal Server Error' });
     }
   });
+
+  fastify.delete('/', async (request, reply) => {
+    try {
+      await db('alerts').del();
+      await db('screenings').del();
+      await db('patients').del();
+      return { success: true, message: 'All patient records reset successfully' };
+    } catch (error) {
+      request.log.error(error);
+      return reply.code(500).send({ error: 'Internal Server Error' });
+    }
+  });
 };
+

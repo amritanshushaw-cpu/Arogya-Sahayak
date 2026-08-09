@@ -26,7 +26,9 @@ import {
   Stethoscope,
   Thermometer,
   Zap,
-  Plus
+  Plus,
+  Trash2,
+  RotateCcw
 } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, getPHCDatabase, Patient as DBPatient, Screening as DBScreening } from '@/lib/db';
@@ -168,6 +170,9 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [syncFilter, setSyncFilter] = useState<string>('ALL');
 
+  const [isResetting, setIsResetting] = useState(false);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  
   // PHC Center Setup & Multi-Database State
   const [isPhcModalOpen, setIsPhcModalOpen] = useState(false);
   const [activePhcDb, setActivePhcDb] = useState<string>('PHC_PATNA_CENTRAL');
@@ -360,17 +365,27 @@ export default function AdminDashboard() {
 
       const mergedPatients = Array.from(patientMap.values());
 
+      const isResetCleared = typeof window !== 'undefined' && localStorage.getItem('admin_records_cleared') === 'true';
+
+      if (mergedPatients.length > 0 && isResetCleared) {
+        localStorage.removeItem('admin_records_cleared');
+      }
+
       // Fallback presentation data if no patients found anywhere
       if (mergedPatients.length === 0) {
-        setPatients([
-          { id: 'P01', abha_id: '91-2049-1823', name: 'Ramesh Yadav', age: 45, gender: 'M', phone: '+91 9876500001', village: 'Maner Block', status: 'Critical', risk_level: 'RED', lastVisit: '2026-08-01', syncStatus: 'synced', assigned_phc_code: 'PHC_MANER', assigned_phc_name: 'Maner Sub-Center PHC', distance_km: 1.8, family_history: { diabetes: true } },
-          { id: 'P02', abha_id: '91-5830-4921', name: 'Sunita Kumari', age: 38, gender: 'F', phone: '+91 9876500002', village: 'Bihta Station Road', status: 'Stable', risk_level: 'GREEN', lastVisit: '2026-08-04', syncStatus: 'synced', assigned_phc_code: 'PHC_BIHTA', assigned_phc_name: 'Bihta PHC Center', distance_km: 2.1, family_history: { hypertension: true } },
-          { id: 'P03', abha_id: '91-3829-1029', name: 'Anil Paswan', age: 55, gender: 'M', phone: '+91 9876500003', village: 'Fatuha Sector 2', status: 'Critical', risk_level: 'RED', lastVisit: '2026-08-06', syncStatus: 'synced', assigned_phc_code: 'PHC_FATUHA', assigned_phc_name: 'Fatuha PHC Center', distance_km: 1.5, lifestyle: { smoking: true, alcohol: true } },
-          { id: 'P04', abha_id: 'LOCAL-TEMP-01', name: 'Meena Devi', age: 62, gender: 'F', phone: '+91 9876500004', village: 'Danapur North', status: 'Observation', risk_level: 'YELLOW', lastVisit: '2026-08-08', syncStatus: 'pending', assigned_phc_code: 'PHC_DANAPUR', assigned_phc_name: 'Danapur Sub-Center', distance_km: 2.8, family_history: { diabetes: true, hypertension: true } },
-          { id: 'P05', abha_id: '91-8841-0029', name: 'Sourav Roy', age: 34, gender: 'M', phone: '+91 9876500005', village: 'Bhawanipore, Kolkata', status: 'Stable', risk_level: 'GREEN', lastVisit: '2026-08-09', syncStatus: 'synced', assigned_phc_code: 'PHC_BHAWANIPORE', assigned_phc_name: 'Bhawanipore PHC', distance_km: 1.2 },
-          { id: 'P06', abha_id: '91-7731-9012', name: 'Amit Sharma', age: 49, gender: 'M', phone: '+91 9876500006', village: 'Bettiah Block', status: 'Observation', risk_level: 'YELLOW', lastVisit: '2026-08-09', syncStatus: 'synced', assigned_phc_code: 'PHC_BETTIAH_01', assigned_phc_name: 'Bettiah Primary Health Center', distance_km: 2.4 },
-          { id: 'P07', abha_id: '91-9921-5510', name: 'Maulana Amritanshu', age: 41, gender: 'M', phone: '+91 9876543210', village: 'Patna HQ', status: 'Pending', lastVisit: '2026-08-09', syncStatus: 'synced', assigned_phc_code: 'PHC_PATNA_CENTRAL', assigned_phc_name: 'Patna Central PHC', distance_km: 1.0 }
-        ]);
+        if (isResetCleared) {
+          setPatients([]);
+        } else {
+          setPatients([
+            { id: 'P01', abha_id: '91-2049-1823', name: 'Ramesh Yadav', age: 45, gender: 'M', phone: '+91 9876500001', village: 'Maner Block', status: 'Critical', risk_level: 'RED', lastVisit: '2026-08-01', syncStatus: 'synced', assigned_phc_code: 'PHC_MANER', assigned_phc_name: 'Maner Sub-Center PHC', distance_km: 1.8, family_history: { diabetes: true } },
+            { id: 'P02', abha_id: '91-5830-4921', name: 'Sunita Kumari', age: 38, gender: 'F', phone: '+91 9876500002', village: 'Bihta Station Road', status: 'Stable', risk_level: 'GREEN', lastVisit: '2026-08-04', syncStatus: 'synced', assigned_phc_code: 'PHC_BIHTA', assigned_phc_name: 'Bihta PHC Center', distance_km: 2.1, family_history: { hypertension: true } },
+            { id: 'P03', abha_id: '91-3829-1029', name: 'Anil Paswan', age: 55, gender: 'M', phone: '+91 9876500003', village: 'Fatuha Sector 2', status: 'Critical', risk_level: 'RED', lastVisit: '2026-08-06', syncStatus: 'synced', assigned_phc_code: 'PHC_FATUHA', assigned_phc_name: 'Fatuha PHC Center', distance_km: 1.5, lifestyle: { smoking: true, alcohol: true } },
+            { id: 'P04', abha_id: 'LOCAL-TEMP-01', name: 'Meena Devi', age: 62, gender: 'F', phone: '+91 9876500004', village: 'Danapur North', status: 'Observation', risk_level: 'YELLOW', lastVisit: '2026-08-08', syncStatus: 'pending', assigned_phc_code: 'PHC_DANAPUR', assigned_phc_name: 'Danapur Sub-Center', distance_km: 2.8, family_history: { diabetes: true, hypertension: true } },
+            { id: 'P05', abha_id: '91-8841-0029', name: 'Sourav Roy', age: 34, gender: 'M', phone: '+91 9876500005', village: 'Bhawanipore, Kolkata', status: 'Stable', risk_level: 'GREEN', lastVisit: '2026-08-09', syncStatus: 'synced', assigned_phc_code: 'PHC_BHAWANIPORE', assigned_phc_name: 'Bhawanipore PHC', distance_km: 1.2 },
+            { id: 'P06', abha_id: '91-7731-9012', name: 'Amit Sharma', age: 49, gender: 'M', phone: '+91 9876500006', village: 'Bettiah Block', status: 'Observation', risk_level: 'YELLOW', lastVisit: '2026-08-09', syncStatus: 'synced', assigned_phc_code: 'PHC_BETTIAH_01', assigned_phc_name: 'Bettiah Primary Health Center', distance_km: 2.4 },
+            { id: 'P07', abha_id: '91-9921-5510', name: 'Maulana Amritanshu', age: 41, gender: 'M', phone: '+91 9876543210', village: 'Patna HQ', status: 'Pending', lastVisit: '2026-08-09', syncStatus: 'synced', assigned_phc_code: 'PHC_PATNA_CENTRAL', assigned_phc_name: 'Patna Central PHC', distance_km: 1.0 }
+          ]);
+        }
       } else {
         setPatients(mergedPatients);
       }
@@ -513,6 +528,49 @@ export default function AdminDashboard() {
     }
   };
 
+  // Reset All Patient Records Across System
+  const handleResetPatientRecords = async () => {
+    setIsResetting(true);
+    try {
+      // 1. Reset server database
+      try {
+        await fetch(`${apiUrl}/api/admin/reset-patients`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        await fetch(`${apiUrl}/api/patients`, {
+          method: 'DELETE'
+        });
+      } catch (sErr) {
+        console.warn('Server reset call warning (proceeding to clear local database):', sErr);
+      }
+
+      // 2. Clear local IndexedDB databases
+      await db.screenings.clear();
+      await db.patients.clear();
+      await db.alerts.clear();
+      await db.syncQueue.clear();
+
+      // 3. Mark admin_records_cleared in localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('admin_records_cleared', 'true');
+      }
+
+      // 4. Reset component state
+      setPatients([]);
+      setSelectedPatient(null);
+      setPatientScreenings([]);
+      setIsResetModalOpen(false);
+
+      toast.success('All patient records have been reset successfully!');
+    } catch (err) {
+      console.error('Error resetting patient records:', err);
+      toast.error('Failed to reset patient records.');
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   // Filtered patient list
   const filteredPatients = useMemo(() => {
     return patients.filter((p) => {
@@ -588,10 +646,19 @@ export default function AdminDashboard() {
             <button
               onClick={handleTriggerSync}
               disabled={isSyncing}
-              className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-medium px-4 py-2.5 rounded-xl border border-emerald-400/30 shadow-lg shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50"
+              className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-medium px-4 py-2.5 rounded-xl border border-emerald-400/30 shadow-lg shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
             >
               <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
               <span>{isSyncing ? 'Synchronizing...' : 'Sync Patient Records'}</span>
+            </button>
+
+            <button
+              onClick={() => setIsResetModalOpen(true)}
+              className="flex items-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-medium px-4 py-2.5 rounded-xl border border-rose-500/30 shadow-lg shadow-rose-500/10 transition-all active:scale-95 cursor-pointer"
+              title="Reset all patient records across local & server database"
+            >
+              <Trash2 className="w-4 h-4 text-rose-400" />
+              <span>Reset Patient Records</span>
             </button>
           </div>
         </header>
@@ -1265,14 +1332,14 @@ export default function AdminDashboard() {
                 <button
                   type="button"
                   onClick={() => setIsPhcModalOpen(false)}
-                  className="w-1/2 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-xl font-medium transition-colors"
+                  className="w-1/2 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-xl font-medium transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={phcSubmitting}
-                  className="w-1/2 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition-colors shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-1.5"
+                  className="w-1/2 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition-colors shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   {phcSubmitting ? (
                     <>
@@ -1289,6 +1356,66 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* Reset Patient Records Confirmation Modal */}
+      {isResetModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-rose-500/30 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-rose-500/20 border border-rose-500/30 flex items-center justify-center flex-shrink-0">
+                <ShieldAlert className="w-6 h-6 text-rose-400" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white">Reset Patient Records</h3>
+                <p className="text-xs text-rose-300/80 font-mono-tech mt-0.5">CRITICAL SYSTEM ACTION</p>
+              </div>
+            </div>
+
+            <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 text-xs text-slate-300 leading-relaxed space-y-2">
+              <p className="text-sm font-medium text-rose-200">
+                Are you sure you want to reset all patient records?
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-slate-400">
+                <li>Deletes all patient profiles from local & server databases</li>
+                <li>Clears all screening logs and diagnostic reports</li>
+                <li>Resets pending offline sync queue items</li>
+              </ul>
+              <p className="font-semibold text-rose-400 pt-1">
+                This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setIsResetModalOpen(false)}
+                disabled={isResetting}
+                className="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 transition-all text-sm font-medium disabled:opacity-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleResetPatientRecords}
+                disabled={isResetting}
+                className="flex items-center gap-2 bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 text-white font-medium px-5 py-2.5 rounded-xl shadow-lg shadow-rose-600/30 transition-all active:scale-95 text-sm disabled:opacity-50 cursor-pointer"
+              >
+                {isResetting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Resetting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>Yes, Reset All Records</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
