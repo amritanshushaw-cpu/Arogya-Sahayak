@@ -55,7 +55,7 @@ Always be empathetic, professional, and clear. If vitals or symptoms indicate cr
         body: JSON.stringify({
           model: 'llama-3.1-8b-instant',
           messages: messages,
-          max_tokens: max_tokens || 3000
+          max_tokens: Math.max(max_tokens || 0, 3000)
         })
       });
 
