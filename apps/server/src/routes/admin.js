@@ -22,6 +22,8 @@ async function adminRoutes(fastify, options) {
 
   fastify.get('/patients', async (request, reply) => {
     try {
+      const { phc_code, phc_id } = request.query;
+
       // Subquery to get the latest screening timestamp per patient
       const latestScreenings = db('screenings')
         .select('patient_id')
@@ -29,7 +31,7 @@ async function adminRoutes(fastify, options) {
         .groupBy('patient_id')
         .as('latest_s');
 
-      const patients = await db('patients')
+      let query = db('patients')
         .leftJoin(latestScreenings, 'patients.id', 'latest_s.patient_id')
         .leftJoin('screenings', function() {
           this.on('screenings.patient_id', '=', 'latest_s.patient_id')
@@ -39,8 +41,15 @@ async function adminRoutes(fastify, options) {
           'patients.*',
           'screenings.risk_level',
           'screenings.screening_date as last_visit'
-        )
-        .orderBy('patients.created_at', 'desc');
+        );
+
+      if (phc_code) {
+        query = query.where({ assigned_phc_code: phc_code });
+      } else if (phc_id) {
+        query = query.where({ assigned_phc_id: phc_id });
+      }
+
+      const patients = await query.orderBy('patients.created_at', 'desc');
 
       const formattedPatients = patients.map(p => ({
         ...p,

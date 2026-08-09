@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, getPHCDatabase, Patient as DBPatient, Screening as DBScreening } from '@/lib/db';
+import { findNearestPHCCenter } from '@/lib/phcRouting';
 import { syncManager } from '@/lib/sync';
 import toast from 'react-hot-toast';
 
@@ -54,6 +55,9 @@ export interface AdminPatient {
   lifestyle?: any;
   created_at?: string;
   registered_by?: string;
+  assigned_phc_code?: string;
+  assigned_phc_name?: string;
+  distance_km?: number;
 }
 
 interface Worker {
@@ -280,29 +284,38 @@ export default function AdminDashboard() {
         ? patientsData 
         : ((patientsData as any).patients || (patientsData as any).data || []);
 
-      const formattedServerPatients: AdminPatient[] = serverPatientsRaw.map((p: any) => ({
-        id: p.id || p.serverId || 'N/A',
-        name: p.name || 'Unnamed Patient',
-        age: Number(p.age) || 0,
-        gender: p.gender || 'Unknown',
-        phone: p.phone || 'N/A',
-        village: p.village || p.location || 'Unassigned',
-        block: p.block || '',
-        district: p.district || '',
-        state: p.state || '',
-        status: p.status || (p.risk_level === 'RED' ? 'Critical' : p.risk_level === 'YELLOW' ? 'Observation' : p.risk_level === 'GREEN' ? 'Stable' : 'Pending'),
-        risk_level: p.risk_level || (p.status === 'Critical' ? 'RED' : p.status === 'Observation' ? 'YELLOW' : p.status === 'Stable' ? 'GREEN' : undefined),
-        lastVisit: p.lastVisit || (p.created_at ? new Date(p.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]),
-        syncStatus: 'synced',
-        abha_id: p.abha_id || p.id,
-        family_history: p.family_history,
-        lifestyle: p.lifestyle,
-        created_at: p.created_at
-      }));
+      const formattedServerPatients: AdminPatient[] = serverPatientsRaw.map((p: any) => {
+        const routing = findNearestPHCCenter(p.lat, p.lng, p.village || p.location);
+        const nearestPhc = routing.nearestPHC;
+        return {
+          id: p.id || p.serverId || 'N/A',
+          name: p.name || 'Unnamed Patient',
+          age: Number(p.age) || 0,
+          gender: p.gender || 'Unknown',
+          phone: p.phone || 'N/A',
+          village: p.village || p.location || 'Unassigned',
+          block: p.block || '',
+          district: p.district || '',
+          state: p.state || '',
+          status: p.status || (p.risk_level === 'RED' ? 'Critical' : p.risk_level === 'YELLOW' ? 'Observation' : p.risk_level === 'GREEN' ? 'Stable' : 'Pending'),
+          risk_level: p.risk_level || (p.status === 'Critical' ? 'RED' : p.status === 'Observation' ? 'YELLOW' : p.status === 'Stable' ? 'GREEN' : undefined),
+          lastVisit: p.lastVisit || (p.created_at ? new Date(p.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]),
+          syncStatus: 'synced',
+          abha_id: p.abha_id || p.id,
+          family_history: p.family_history,
+          lifestyle: p.lifestyle,
+          created_at: p.created_at,
+          assigned_phc_code: p.assigned_phc_code || nearestPhc.phc_code,
+          assigned_phc_name: p.assigned_phc_name || nearestPhc.name,
+          distance_km: p.distance_km || routing.distanceKm
+        };
+      });
 
       // Format local IndexedDB patients
       const formattedLocalPatients: AdminPatient[] = localDBPatients.map((lp) => {
         const risk = (lp as any).risk_level || ((lp as any).status === 'Critical' ? 'RED' : (lp as any).status === 'Observation' ? 'YELLOW' : (lp as any).status === 'Stable' ? 'GREEN' : undefined);
+        const routing = findNearestPHCCenter((lp as any).lat, (lp as any).lng, lp.village);
+        const nearestPhc = routing.nearestPHC;
         return {
           id: lp.id,
           name: lp.name,
@@ -317,7 +330,10 @@ export default function AdminDashboard() {
           abha_id: lp.serverId || lp.id,
           family_history: lp.family_history,
           lifestyle: lp.lifestyle,
-          created_at: lp.createdAt ? new Date(lp.createdAt).toISOString() : undefined
+          created_at: lp.createdAt ? new Date(lp.createdAt).toISOString() : undefined,
+          assigned_phc_code: (lp as any).assigned_phc_code || nearestPhc.phc_code,
+          assigned_phc_name: (lp as any).assigned_phc_name || nearestPhc.name,
+          distance_km: (lp as any).distance_km || routing.distanceKm
         };
       });
 
@@ -503,9 +519,12 @@ export default function AdminDashboard() {
       const matchesStatus = statusFilter === 'ALL' || p.status.toUpperCase() === statusFilter.toUpperCase();
       const matchesSync = syncFilter === 'ALL' || p.syncStatus.toUpperCase() === syncFilter.toUpperCase();
 
-      return matchesSearch && matchesStatus && matchesSync;
+      // Proximity & DB Isolation: Only include patients assigned nearest to active PHC Center DB
+      const matchesPhcDb = !activePhcDb || activePhcDb === 'ALL' || p.assigned_phc_code === activePhcDb;
+
+      return matchesSearch && matchesStatus && matchesSync && matchesPhcDb;
     });
-  }, [patients, searchQuery, statusFilter, syncFilter]);
+  }, [patients, searchQuery, statusFilter, syncFilter, activePhcDb]);
 
   // Statistics counters
   const stats = useMemo(() => {
@@ -740,6 +759,11 @@ export default function AdminDashboard() {
                               <MapPin className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
                               <span>{p.village || 'Unassigned'}</span>
                             </div>
+                            {p.assigned_phc_name && (
+                              <span className="text-[10px] text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-1.5 py-0.5 rounded mt-1 inline-flex items-center gap-1 font-mono-tech">
+                                📍 Nearest PHC: {p.assigned_phc_name} ({p.distance_km || 2.5} km)
+                              </span>
+                            )}
                           </td>
                           <td className="py-3.5 px-4">
                             <span className={`px-2.5 py-1 rounded-full text-xs font-medium border font-mono-tech inline-flex items-center gap-1 ${

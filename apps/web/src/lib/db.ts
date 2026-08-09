@@ -1,4 +1,5 @@
 import Dexie, { Table } from 'dexie';
+import { findNearestPHCCenter, NearestPHCResult } from './phcRouting';
 
 export interface Patient {
   // Local identifier
@@ -8,6 +9,12 @@ export interface Patient {
   name: string;
   phone: string;
   village: string;
+  lat?: number;
+  lng?: number;
+  assigned_phc_id?: string;
+  assigned_phc_code?: string;
+  assigned_phc_name?: string;
+  distance_km?: number;
   // Synchronisation metadata
   syncStatus: 'synced' | 'pending' | 'failed';
   deviceId: string | null;
@@ -104,7 +111,7 @@ export class ArogyaDatabase extends Dexie {
 
     // Version 4 – add phc_settings table for distinct multi-location PHC center databases
     this.version(4).stores({
-      patients: 'id, serverId, deviceId, syncStatus, createdAt, updatedAt, lastSyncTimestamp',
+      patients: 'id, serverId, deviceId, syncStatus, createdAt, updatedAt, lastSyncTimestamp, assigned_phc_code',
       screenings: 'id, patient_id, serverId, deviceId, syncStatus, createdAt, updatedAt, lastSyncTimestamp',
       alerts: 'id, patient_id, screening_id, serverId, deviceId, syncStatus, createdAt, updatedAt, lastSyncTimestamp',
       syncQueue: 'id++, action, status, failed',
@@ -131,6 +138,41 @@ export function getPHCDatabase(phcCode: string = 'PATNA_CENTRAL'): ArogyaDatabas
   }
 
   return phcDbInstances.get(dbName)!;
+}
+
+/**
+ * Automatically routes and saves a patient record exclusively to their Nearest Available PHC Center's Database
+ */
+export async function routePatientToNearestPHCDatabase(
+  patient: Patient,
+  lat?: number | null,
+  lng?: number | null,
+  villageName?: string | null
+): Promise<{ patient: Patient; routing: NearestPHCResult }> {
+  const routing = findNearestPHCCenter(lat, lng, villageName || patient.village);
+  const nearestPhc = routing.nearestPHC;
+
+  const enrichedPatient: Patient = {
+    ...patient,
+    lat: lat || undefined,
+    lng: lng || undefined,
+    assigned_phc_id: nearestPhc.id,
+    assigned_phc_code: nearestPhc.phc_code,
+    assigned_phc_name: nearestPhc.name,
+    distance_km: routing.distanceKm
+  };
+
+  // Save to system DB
+  await db.patients.put(enrichedPatient);
+
+  // Save to the NEAREST PHC Center's dedicated IndexedDB instance
+  const phcDb = getPHCDatabase(nearestPhc.phc_code);
+  await phcDb.open();
+  await phcDb.patients.put(enrichedPatient);
+
+  console.log(`[Proximity Router] Routed patient "${patient.name}" to nearest PHC database: "${nearestPhc.name}" (${nearestPhc.phc_code}) - ${routing.distanceKm} km away`);
+
+  return { patient: enrichedPatient, routing };
 }
 
 // Default system database instance
