@@ -248,12 +248,7 @@ export default function AdminDashboard() {
 
       // Fallback presentation data if no patients found anywhere
       if (mergedPatients.length === 0) {
-        setPatients([
-          { id: 'P01', abha_id: '91-2049-1823', name: 'Ramesh Yadav', age: 45, gender: 'M', phone: '+91 9876500001', village: 'Maner', status: 'Critical', risk_level: 'RED', lastVisit: '2026-08-01', syncStatus: 'synced', family_history: { diabetes: true } },
-          { id: 'P02', abha_id: '91-5830-4921', name: 'Sunita Kumari', age: 38, gender: 'F', phone: '+91 9876500002', village: 'Bihta', status: 'Stable', risk_level: 'GREEN', lastVisit: '2026-08-04', syncStatus: 'synced', family_history: { hypertension: true } },
-          { id: 'P03', abha_id: '91-3829-1029', name: 'Anil Paswan', age: 55, gender: 'M', phone: '+91 9876500003', village: 'Fatuha', status: 'Critical', risk_level: 'RED', lastVisit: '2026-08-06', syncStatus: 'synced', lifestyle: { smoking: true, alcohol: true } },
-          { id: 'P04', abha_id: 'LOCAL-TEMP-01', name: 'Meena Devi', age: 62, gender: 'F', phone: '+91 9876500004', village: 'Danapur', status: 'Observation', risk_level: 'YELLOW', lastVisit: '2026-08-08', syncStatus: 'pending', family_history: { diabetes: true, hypertension: true } },
-        ]);
+        setPatients([]);
       } else {
         setPatients(mergedPatients);
       }
@@ -269,10 +264,7 @@ export default function AdminDashboard() {
           activeCases: Math.floor(Math.random() * 10) + 5
         })));
       } else {
-        setAshaWorkers([
-          { id: 'A01', name: 'Priya Devi', assignedVillage: 'Maner / Bihta Block', contact: '+91 9876543210', activeCases: 14 },
-          { id: 'A02', name: 'Lakshmi Bai', assignedVillage: 'Fatuha / Danapur Block', contact: '+91 9876543211', activeCases: 9 },
-        ]);
+        setAshaWorkers([]);
       }
 
       // Parse PHCs
@@ -287,10 +279,7 @@ export default function AdminDashboard() {
           status: 'Active'
         })));
       } else {
-        setPhcs([
-          { id: 'H01', name: 'Patna Central PHC', location: 'Patna District HQ', capacity: 60, status: 'Active' },
-          { id: 'H02', name: 'Danapur Sub-Center', location: 'North Block', capacity: 25, status: 'Overcrowded' },
-        ]);
+        setPhcs([]);
       }
 
       setLastFetchTime(new Date().toLocaleTimeString());

@@ -11,34 +11,24 @@ module.exports = async function (fastify, opts) {
         return reply.code(500).send({ error: 'Groq API Key not configured on server' });
       }
 
-      const LANG_MAP = {
-        'hi-IN': 'Hindi (हिंदी)',
-        'bn-IN': 'Bengali (বাংলা)',
-        'te-IN': 'Telugu (తెలుగు)',
-        'mr-IN': 'Marathi (मराठी)',
-        'ta-IN': 'Tamil (தமிழ்)',
-        'gu-IN': 'Gujarati (ગુજરાતી)',
-        'ur-IN': 'Urdu (اردو)',
-        'kn-IN': 'Kannada (ಕನ್ನಡ)',
-        'or-IN': 'Odia (ଓଡ଼ିଆ)',
-        'ml-IN': 'Malayalam (മലയാളം)',
-        'pa-IN': 'Punjabi (ਪੰਜਾਬੀ)',
-        'en-US': 'English'
+      const langMap = {
+        'en-US': 'English', 'hi-IN': 'Hindi (हिंदी)', 'bn-IN': 'Bengali (বাংলা)', 
+        'te-IN': 'Telugu (తెలుగు)', 'mr-IN': 'Marathi (मराठी)', 'ta-IN': 'Tamil (தமிழ்)',
+        'gu-IN': 'Gujarati (ગુજરાતી)', 'ur-IN': 'Urdu (اردو)', 'kn-IN': 'Kannada (ಕನ್ನಡ)',
+        'or-IN': 'Odia (ଓଡ଼ିଆ)', 'ml-IN': 'Malayalam (മലയാളം)', 'pa-IN': 'Punjabi (ਪੰਜਾਬੀ)'
       };
+      const langName = langMap[language] || language || 'English';
 
-      const targetLang = LANG_MAP[language] || language || 'English';
+      const systemPrompt = `You are Arogya Sahayak, an advanced, highly-accurate AI clinical decision support system designed for rural healthcare in India. 
+CRITICAL RULE: You MUST output your ENTIRE response STRICTLY and ONLY in this language: ${langName}. Do not use English unless the requested language is English.
 
-      const systemPrompt = `You are Arogya Sahayak, an expert AI medical triage assistant specialized for rural healthcare in India following ICMR and WHO clinical guidelines.
-
-CRITICAL LANGUAGE MANDATE: You MUST generate your ENTIRE output STRICTLY and ONLY in the ${targetLang} language (${language || 'en-US'}). Do NOT use English headers, English titles, or English words unless requested in English. Every section title, symptom analysis, diagnosis, and clinical recommendation MUST be written entirely in ${targetLang}.
-
-Structure your diagnostic analysis clearly into these 4 numbered sections (all written in ${targetLang}):
-1. Executive Risk Summary (Risk Level)
-2. Vital Signs Evaluation (Analysis of Systolic/Diastolic BP, Glucose, SpO2, Pulse, Hb)
-3. Symptom & History Assessment (Correlation between patient symptoms, age, and family history)
-4. Recommended Actions & Next Steps (Immediate emergency advice, PHC referral, first-aid, or routine checkup guidance).
-
-Always be empathetic, professional, and clear. If vitals or symptoms indicate critical danger (e.g. SpO2 < 90%, BP >= 180, Glucose >= 250), explicitly emphasize immediate medical attention at the nearest PHC center.`;
+Your goal is to achieve an extremely high F1 score for diagnosis accuracy based on WHO and ICMR guidelines. Do NOT just say "consult a doctor". Instead, provide a deep, constructive, and actionable clinical triage.
+Structure your analysis:
+1. Executive Risk Summary: (State Risk Level: LOW / MODERATE / HIGH / RED ALERT)
+2. Vital Signs Evaluation: (Detailed physiological implications of BP, Glucose, SpO2, Pulse, Hb, Temp)
+3. Symptom & History Correlation: (Analyze the patient's symptoms, age, and family history deeply)
+4. Differential Diagnoses: (List top 3 most likely medical conditions with high clinical confidence)
+5. Recommended Action Plan: (Give specific first-aid, safe home remedies, lifestyle interventions, and exact warning signs. Explicitly mention immediate PHC referral if critical danger).`;
 
       const messages = [
         { role: 'system', content: systemPrompt },
@@ -53,9 +43,10 @@ Always be empathetic, professional, and clear. If vitals or symptoms indicate cr
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'llama-3.1-8b-instant',
+          model: 'llama-3.1-70b-versatile',
           messages: messages,
-          max_tokens: Math.max(max_tokens || 0, 3000)
+          max_tokens: Math.max(max_tokens || 0, 3000),
+          temperature: 0.1 // lower temp for more clinical determinism
         })
       });
 

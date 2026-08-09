@@ -25,12 +25,7 @@ const diseaseData = [
   { name: "Jun", diabetes: 70, hypertension: 50 },
 ];
 
-const alertsData = [
-  { id: 1, name: "Ramesh Kumar", village: "Danapur", risk: "RED" },
-  { id: 2, name: "Sunita Devi", village: "Phulwari", risk: "RED" },
-  { id: 3, name: "Anil Sharma", village: "Bihta", risk: "YELLOW" },
-  { id: 4, name: "Priya Singh", village: "Maner", risk: "YELLOW" },
-];
+const alertsData: any[] = [];
 
 export default function PhcDashboardPage() {
   return (
@@ -43,15 +38,15 @@ export default function PhcDashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center items-center">
           <p className="text-sm font-medium text-gray-500 uppercase">Total Screenings</p>
-          <p className="text-4xl font-bold text-blue-600 mt-2">1,248</p>
+          <p className="text-4xl font-bold text-blue-600 mt-2">0</p>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-sm border border-red-100 flex flex-col justify-center items-center">
           <p className="text-sm font-medium text-gray-500 uppercase">Active RED Alerts</p>
-          <p className="text-4xl font-bold text-red-600 mt-2">12</p>
+          <p className="text-4xl font-bold text-red-600 mt-2">0</p>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-sm border border-yellow-100 flex flex-col justify-center items-center">
           <p className="text-sm font-medium text-gray-500 uppercase">Active YELLOW Alerts</p>
-          <p className="text-4xl font-bold text-yellow-500 mt-2">34</p>
+          <p className="text-4xl font-bold text-yellow-500 mt-2">0</p>
         </div>
       </div>
 

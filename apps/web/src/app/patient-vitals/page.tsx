@@ -110,7 +110,7 @@ export default function PatientDashboard() {
         window.speechSynthesis.cancel();
       }
     };
-  }, []);
+  }, [step]);
 
   const speakResult = () => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
