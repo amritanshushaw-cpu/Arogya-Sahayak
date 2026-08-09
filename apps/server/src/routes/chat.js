@@ -36,29 +36,40 @@ Structure your analysis:
         { role: 'user', content: message }
       ];
 
-      const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'llama-3.1-70b-versatile',
-          messages: messages,
-          max_tokens: Math.max(max_tokens || 0, 3000),
-          temperature: 0.1 // lower temp for more clinical determinism
-        })
-      });
+      const candidateModels = ['llama-3.3-70b-versatile', 'llama3-70b-8192', 'llama-3.1-70b-versatile', 'mixtral-8x7b-32768'];
+      let replyText = null;
 
-      if (!groqResponse.ok) {
-        const errText = await groqResponse.text();
-        throw new Error(`Groq Error: ${errText}`);
+      for (const model of candidateModels) {
+        try {
+          const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model,
+              messages,
+              max_tokens: Math.max(max_tokens || 0, 2000),
+              temperature: 0.1
+            })
+          });
+
+          if (groqResponse.ok) {
+            const groqData = await groqResponse.json();
+            replyText = groqData.choices?.[0]?.message?.content;
+            if (replyText) break;
+          }
+        } catch (mErr) {
+          console.warn(`Model ${model} failed, trying next fallback:`, mErr.message);
+        }
       }
 
-      const groqData = await groqResponse.json();
-      const replyText = groqData.choices[0].message.content;
+      if (replyText) {
+        return { reply: replyText };
+      }
 
-      return { reply: replyText };
+      throw new Error('All Groq AI models unavailable');
     } catch (error) {
       request.log.error(error);
       return reply.code(500).send({ error: error.message || 'Failed to communicate with AI' });
