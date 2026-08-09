@@ -1,6 +1,6 @@
 # Arogya Sahayak (आरोग्य सहायक)
 
-**Live App:** [https://arogaya-sahayak.vercel.app](https://arogaya-sahayak.vercel.app) | **GitHub Repository:** [https://github.com/amritanshushaw-cpu/Arogya-Sahayak](https://github.com/amritanshushaw-cpu/Arogya-Sahayak)
+**Live App:** [https://arogaya-sahayak.vercel.app](https://arogaya-sahayak.vercel.app) | **GitHub Repository:** [https://github.com/amritanshushaw-cpu/Arogya-Sahayak](https://github.com/amritanshushaw-cpu/Arogya-Sahayak) | **Video Demo:** [https://youtu.be/YZrXIxiJPog](https://youtu.be/YZrXIxiJPog)
 
 Arogya Sahayak is a state-of-the-art **hybrid Offline-First AI Healthcare Platform** designed specifically for ASHA workers, ANMs, and rural health clinics (PHCs) in India. 
 
