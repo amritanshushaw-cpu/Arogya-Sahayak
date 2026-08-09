@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { db, routePatientToNearestPHCDatabase } from '@/lib/db';
 import { syncManager } from '@/lib/sync';
+import { bhasiniTextToSpeech } from '@/lib/bhasini';
 
 export default function PatientDashboard() {
   const { token, user, language, setLanguage } = useAuthStore();
@@ -50,25 +51,35 @@ export default function PatientDashboard() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const ttsAbortRef = useRef<AbortController | null>(null);
+  const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Clean up speech synthesis when component unmounts or step changes
+  // Stop all speech: abort in-flight fetch, stop playing audio, cancel Web Speech
+  const stopAllSpeech = () => {
+    if (ttsAbortRef.current) {
+      ttsAbortRef.current.abort();
+      ttsAbortRef.current = null;
+    }
+    if (ttsAudioRef.current) {
+      ttsAudioRef.current.pause();
+      ttsAudioRef.current.currentTime = 0;
+      ttsAudioRef.current = null;
+    }
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsSpeaking(false);
+  };
+
+  // Clean up speech when component unmounts or step changes
   useEffect(() => {
-    return () => {
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
-    };
+    return () => { stopAllSpeech(); };
   }, [step]);
 
-  const speakResult = () => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      toast.error(UI_TRANS[language]?.audioFailed || 'Audio playback is not supported in this browser.');
-      return;
-    }
-
-    if (isSpeaking) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
+  const speakResult = async () => {
+    // Toggle off if already speaking or fetching
+    if (isSpeaking || ttsAbortRef.current) {
+      stopAllSpeech();
       toast(UI_TRANS[language]?.audioStopped || 'Audio playback stopped.', { icon: 'ℹ️' });
       return;
     }
@@ -78,35 +89,65 @@ export default function PatientDashboard() {
       return;
     }
 
-    window.speechSynthesis.cancel(); // Stop any previous speech
-
-    // Format clean text for text-to-speech engine
+    // Clean text for TTS
     const textToSpeak = analysisResult
       .replace(/[*#_`]/g, '')
       .replace(/\[Offline Diagnostic Model\]/g, 'Diagnostic Summary.')
       .replace(/\n+/g, '. ')
       .trim();
 
+    const abortController = new AbortController();
+    ttsAbortRef.current = abortController;
+    setIsSpeaking(true);
+
+    // 1. Attempt Bhasini server-side TTS (Bhasini Dhruva → Google Translate proxy)
+    try {
+      const bhasiniRes = await bhasiniTextToSpeech(textToSpeak, language || 'en-US');
+
+      if (abortController.signal.aborted) return;
+
+      if (bhasiniRes.audioContent) {
+        const mimeType = bhasiniRes.audioType === 'mp3' ? 'audio/mpeg' : 'audio/wav';
+        const audio = new Audio(`data:${mimeType};base64,${bhasiniRes.audioContent}`);
+        ttsAudioRef.current = audio;
+        ttsAbortRef.current = null;
+
+        audio.onended = () => { ttsAudioRef.current = null; setIsSpeaking(false); };
+        audio.onerror = () => { ttsAudioRef.current = null; setIsSpeaking(false); toast.error(UI_TRANS[language]?.audioFailed || 'Audio playback failed.'); };
+        await audio.play();
+        return;
+      }
+    } catch (bErr) {
+      if (abortController.signal.aborted) return;
+      console.warn('[Disease Detection TTS] Server TTS unavailable, falling back to Web Speech:', bErr);
+    }
+
+    ttsAbortRef.current = null;
+    if (abortController.signal.aborted) return;
+
+    // 2. Native Web Speech Synthesis fallback (last resort)
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      setIsSpeaking(false);
+      toast.error(UI_TRANS[language]?.audioFailed || 'Audio playback is not supported in this browser.');
+      return;
+    }
+
+    window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
     utterance.lang = language;
-    utterance.rate = 0.92; // Slightly natural pace for clarity
+    utterance.rate = 0.92;
 
-    // Select the best matching browser voice for the target language
     const availableVoices = window.speechSynthesis.getVoices();
     if (availableVoices && availableVoices.length > 0) {
       const targetLangLower = language.toLowerCase();
       const targetPrefix = language.split('-')[0].toLowerCase();
-      
-      // 1. Exact match (e.g. "hi-IN")
       let bestVoice = availableVoices.find(v => v.lang.toLowerCase() === targetLangLower);
-      // 2. Prefix match (e.g. "hi" or "hi_IN")
       if (!bestVoice) {
-        bestVoice = availableVoices.find(v => 
-          v.lang.toLowerCase().startsWith(targetPrefix) || 
+        bestVoice = availableVoices.find(v =>
+          v.lang.toLowerCase().startsWith(targetPrefix) ||
           v.lang.toLowerCase().includes(targetPrefix)
         );
       }
-      // 3. Name match for language (e.g., "Hindi", "Bengali", "Tamil", etc.)
       if (!bestVoice) {
         const langObj = LANGUAGES.find(l => l.code === language);
         if (langObj) {
@@ -114,27 +155,15 @@ export default function PatientDashboard() {
           bestVoice = availableVoices.find(v => v.name.toLowerCase().includes(pureLangName));
         }
       }
-
       if (bestVoice) {
         utterance.voice = bestVoice;
-        console.log(`[TTS Engine] Matched Voice: ${bestVoice.name} (${bestVoice.lang}) for ${language}`);
+        utterance.lang = bestVoice.lang;
       }
     }
 
-    utterance.onstart = () => {
-      setIsSpeaking(true);
-    };
-
-    utterance.onend = () => {
-      setIsSpeaking(false);
-    };
-
+    utterance.onend = () => { setIsSpeaking(false); };
     utterance.onerror = (err) => {
-      // Do not display failure toast if speech was deliberately stopped/canceled
-      if (err.error === 'interrupted' || err.error === 'canceled') {
-        setIsSpeaking(false);
-        return;
-      }
+      if (err.error === 'interrupted' || err.error === 'canceled') { setIsSpeaking(false); return; }
       console.error('Speech synthesis error:', err);
       setIsSpeaking(false);
       toast.error(UI_TRANS[language]?.audioFailed || 'Audio playback failed.');
