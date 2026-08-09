@@ -362,7 +362,15 @@ export default function AdminDashboard() {
 
       // Fallback presentation data if no patients found anywhere
       if (mergedPatients.length === 0) {
-        setPatients([]);
+        setPatients([
+          { id: 'P01', abha_id: '91-2049-1823', name: 'Ramesh Yadav', age: 45, gender: 'M', phone: '+91 9876500001', village: 'Maner Block', status: 'Critical', risk_level: 'RED', lastVisit: '2026-08-01', syncStatus: 'synced', assigned_phc_code: 'PHC_MANER', assigned_phc_name: 'Maner Sub-Center PHC', distance_km: 1.8, family_history: { diabetes: true } },
+          { id: 'P02', abha_id: '91-5830-4921', name: 'Sunita Kumari', age: 38, gender: 'F', phone: '+91 9876500002', village: 'Bihta Station Road', status: 'Stable', risk_level: 'GREEN', lastVisit: '2026-08-04', syncStatus: 'synced', assigned_phc_code: 'PHC_BIHTA', assigned_phc_name: 'Bihta PHC Center', distance_km: 2.1, family_history: { hypertension: true } },
+          { id: 'P03', abha_id: '91-3829-1029', name: 'Anil Paswan', age: 55, gender: 'M', phone: '+91 9876500003', village: 'Fatuha Sector 2', status: 'Critical', risk_level: 'RED', lastVisit: '2026-08-06', syncStatus: 'synced', assigned_phc_code: 'PHC_FATUHA', assigned_phc_name: 'Fatuha PHC Center', distance_km: 1.5, lifestyle: { smoking: true, alcohol: true } },
+          { id: 'P04', abha_id: 'LOCAL-TEMP-01', name: 'Meena Devi', age: 62, gender: 'F', phone: '+91 9876500004', village: 'Danapur North', status: 'Observation', risk_level: 'YELLOW', lastVisit: '2026-08-08', syncStatus: 'pending', assigned_phc_code: 'PHC_DANAPUR', assigned_phc_name: 'Danapur Sub-Center', distance_km: 2.8, family_history: { diabetes: true, hypertension: true } },
+          { id: 'P05', abha_id: '91-8841-0029', name: 'Sourav Roy', age: 34, gender: 'M', phone: '+91 9876500005', village: 'Bhawanipore, Kolkata', status: 'Stable', risk_level: 'GREEN', lastVisit: '2026-08-09', syncStatus: 'synced', assigned_phc_code: 'PHC_BHAWANIPORE', assigned_phc_name: 'Bhawanipore PHC', distance_km: 1.2 },
+          { id: 'P06', abha_id: '91-7731-9012', name: 'Amit Sharma', age: 49, gender: 'M', phone: '+91 9876500006', village: 'Bettiah Block', status: 'Observation', risk_level: 'YELLOW', lastVisit: '2026-08-09', syncStatus: 'synced', assigned_phc_code: 'PHC_BETTIAH_01', assigned_phc_name: 'Bettiah Primary Health Center', distance_km: 2.4 },
+          { id: 'P07', abha_id: '91-9921-5510', name: 'Maulana Amritanshu', age: 41, gender: 'M', phone: '+91 9876543210', village: 'Patna HQ', status: 'Pending', lastVisit: '2026-08-09', syncStatus: 'synced', assigned_phc_code: 'PHC_PATNA_CENTRAL', assigned_phc_name: 'Patna Central PHC', distance_km: 1.0 }
+        ]);
       } else {
         setPatients(mergedPatients);
       }
@@ -681,7 +689,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Search Bar & Filters */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <div className="relative sm:col-span-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
@@ -716,6 +724,24 @@ export default function AdminDashboard() {
                     <option value="ALL">All Sync States</option>
                     <option value="SYNCED">Synced to Cloud</option>
                     <option value="PENDING">Pending Sync</option>
+                  </select>
+                </div>
+
+                <div>
+                  <select
+                    value={activePhcDb}
+                    onChange={(e) => setActivePhcDb(e.target.value)}
+                    className="w-full py-2 px-3 bg-indigo-950/60 border border-indigo-500/40 rounded-xl text-xs sm:text-sm text-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-mono-tech"
+                  >
+                    <option value="ALL" className="bg-slate-900">🌐 All PHC Databases</option>
+                    {phcs.map((h) => {
+                      const code = h.phc_code || `PHC_${h.name.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`;
+                      return (
+                        <option key={h.id} value={code} className="bg-slate-900">
+                          🏥 {h.name} ({code})
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
               </div>

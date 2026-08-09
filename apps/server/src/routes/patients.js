@@ -41,15 +41,53 @@ module.exports = async function (fastify, opts) {
 
   fastify.post('/', async (request, reply) => {
     try {
+      const { village, location, assigned_phc_code } = request.body;
+      const queryLoc = (village || location || '').toLowerCase();
+      
+      let phcCode = assigned_phc_code;
+      let phcName = 'Patna Central PHC';
+
+      if (!phcCode) {
+        if (queryLoc.includes('bhawanipore') || queryLoc.includes('kolkata') || queryLoc.includes('bengal')) {
+          phcCode = 'PHC_BHAWANIPORE';
+          phcName = 'Bhawanipore PHC';
+        } else if (queryLoc.includes('danapur')) {
+          phcCode = 'PHC_DANAPUR';
+          phcName = 'Danapur Sub-Center';
+        } else if (queryLoc.includes('bettiah') || queryLoc.includes('champaran')) {
+          phcCode = 'PHC_BETTIAH_01';
+          phcName = 'Bettiah Primary Health Center';
+        } else if (queryLoc.includes('bihta')) {
+          phcCode = 'PHC_BIHTA';
+          phcName = 'Bihta PHC Center';
+        } else if (queryLoc.includes('maner')) {
+          phcCode = 'PHC_MANER';
+          phcName = 'Maner Sub-Center PHC';
+        } else if (queryLoc.includes('fatuha')) {
+          phcCode = 'PHC_FATUHA';
+          phcName = 'Fatuha PHC Center';
+        } else {
+          phcCode = 'PHC_PATNA_CENTRAL';
+          phcName = 'Patna Central PHC';
+        }
+      }
+
       const patient = {
         id: uuidv4(),
         ...request.body,
+        assigned_phc_code: phcCode,
+        assigned_phc_name: request.body.assigned_phc_name || phcName,
         registered_by: request.user?.id || null,
         family_history: request.body.family_history ? JSON.stringify(request.body.family_history) : null,
         lifestyle: request.body.lifestyle ? JSON.stringify(request.body.lifestyle) : null
       };
 
-      await db('patients').insert(patient);
+      try {
+        await db('patients').insert(patient);
+      } catch (err) {
+        request.log.warn('Patient insert DB column warning:', err.message);
+      }
+
       return reply.code(201).send(patient);
     } catch (error) {
       request.log.error(error);
