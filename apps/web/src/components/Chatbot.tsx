@@ -5,6 +5,7 @@ import { MessageSquare, X, Send, Bot, Mic, Volume2, VolumeX, Loader2, Globe } fr
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/lib/authStore';
 import { LANGUAGES as GLOBAL_LANGUAGES } from '@/lib/translations';
+import { bhasiniTextToSpeech } from '@/lib/bhasini';
 
 type Message = {
   id: string;
@@ -179,31 +180,56 @@ export const Chatbot = () => {
     recognition.start();
   };
 
-  // Handle Vernacular Speech Synthesis (Voice Output) with Toggle Play/Stop
-  const speakText = (text: string, msgId?: string) => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      toast.error('Speech synthesis not supported on this device.');
-      return;
-    }
+  // Handle Vernacular Speech Synthesis (Voice Output) with Bhasini AI & Web Speech Fallback
+  const speakText = async (text: string, msgId?: string) => {
+    if (typeof window === 'undefined') return;
 
     // TOGGLE FEATURE: If currently speaking this message, stop speech immediately
-    if (activeSpeakingId === msgId && window.speechSynthesis.speaking) {
-      window.speechSynthesis.cancel();
+    if (activeSpeakingId === msgId && (window.speechSynthesis?.speaking || (window as any)._bhasiniAudio)) {
+      window.speechSynthesis?.cancel();
+      if ((window as any)._bhasiniAudio) {
+        (window as any)._bhasiniAudio.pause();
+        (window as any)._bhasiniAudio = null;
+      }
       setActiveSpeakingId(null);
       return;
     }
 
-    window.speechSynthesis.cancel();
+    window.speechSynthesis?.cancel();
+    if ((window as any)._bhasiniAudio) {
+      (window as any)._bhasiniAudio.pause();
+      (window as any)._bhasiniAudio = null;
+    }
     if (msgId) setActiveSpeakingId(msgId);
 
     const cleanText = text.replace(/[*#_`]/g, '').replace(/\n+/g, '. ').trim();
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-
     const targetLangCode = currentLangObj.ttsCode || 'en-US';
+
+    // 1. Attempt Bhasini NLTM TTS Audio synthesis first
+    try {
+      const bhasiniRes = await bhasiniTextToSpeech(cleanText, globalLang || 'bn-IN');
+      if (bhasiniRes.audioContent) {
+        const audio = new Audio(`data:audio/wav;base64,${bhasiniRes.audioContent}`);
+        (window as any)._bhasiniAudio = audio;
+        audio.onended = () => setActiveSpeakingId(null);
+        audio.onerror = () => setActiveSpeakingId(null);
+        await audio.play();
+        return;
+      }
+    } catch (bErr) {
+      console.warn('Bhasini TTS fallback to native speech synthesis:', bErr);
+    }
+
+    // 2. Native Web Speech Synthesis fallback
+    if (!('speechSynthesis' in window)) {
+      setActiveSpeakingId(null);
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = targetLangCode;
     utterance.rate = 0.92;
 
-    // Load available browser voices and filter for Bengali / target vernacular voice
     const voices = window.speechSynthesis.getVoices();
     if (voices && voices.length > 0) {
       const langPrefix = targetLangCode.slice(0, 2).toLowerCase();
@@ -305,8 +331,11 @@ export const Chatbot = () => {
                   <Bot className="text-emerald-400" size={20} aria-hidden="true" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-white text-sm">AI Medical Triage</h3>
-                  <p className="text-xs text-emerald-300 font-mono-tech">Arogya Clinical Engine • Voice Active</p>
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="font-semibold text-white text-sm">AI Medical Triage</h3>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">🇮🇳 Bhasini AI</span>
+                  </div>
+                  <p className="text-xs text-emerald-300 font-mono-tech">Bhasini NLTM Multi-Lingual Engine</p>
                 </div>
               </div>
               <button

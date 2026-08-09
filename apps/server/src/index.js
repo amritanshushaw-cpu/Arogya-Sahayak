@@ -28,6 +28,7 @@ fastify.register(async function (api) {
   api.register(require('./routes/dashboard'), { prefix: '/dashboard' });
   api.register(require('./routes/abdm'), { prefix: '/abdm' });
   api.register(require('./routes/chat'), { prefix: '/chat' });
+  api.register(require('./routes/bhasini'), { prefix: '/bhasini' });
 }, { prefix: '/api' });
 
 // Health check endpoint
