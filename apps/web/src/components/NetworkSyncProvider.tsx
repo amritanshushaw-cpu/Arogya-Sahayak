@@ -21,6 +21,15 @@ export function NetworkSyncProvider({ children }: { children: React.ReactNode })
     // Initialize sync engine
     const cleanupSync = initSyncEngine();
 
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').then((reg) => {
+        console.log('Service Worker registered successfully:', reg.scope);
+      }).catch((err) => {
+        console.error('Service Worker registration failed:', err);
+      });
+    }
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
