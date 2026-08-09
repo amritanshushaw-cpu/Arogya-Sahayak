@@ -651,10 +651,15 @@ export default function HomePage() {
             <Link href="/auth/login" className="text-sm font-medium text-indigo-400 hover:text-indigo-300 focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-md px-2.5 py-1.5 transition-colors">
               {copy.signIn}
             </Link>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono-tech flex-shrink-0">
-              <WifiOff className="w-3.5 h-3.5" aria-hidden="true" />
-              {copy.status}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono-tech flex-shrink-0">
+                <WifiOff className="w-3.5 h-3.5" aria-hidden="true" />
+                {copy.status}
+              </span>
+              <span className="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase tracking-wider flex-shrink-0">
+                Beta
+              </span>
+            </div>
           </div>
         </div>
       </header>
