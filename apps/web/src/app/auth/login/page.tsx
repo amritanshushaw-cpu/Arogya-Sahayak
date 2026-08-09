@@ -182,14 +182,15 @@ function LoginForm() {
           router.push('/dashboard');
         }
       } else {
-      // Fallback demo auth if offline
-      const fallbackName = role === 'patient' ? (phone || 'Patient') : (role === 'asha' ? 'ASHA Worker' : (phone || 'PHC Center'));
-      setAuth('demo-offline-token', { id: selectedPhcId || 'demo-1', name: fallbackName, role: role } as any);
-      toast.success(`Signed in offline as ${role.toUpperCase()}!`);
-      if (role === 'patient') {
-        router.push('/patient-vitals');
-      } else {
-        router.push('/dashboard');
+        // Fallback demo auth if offline
+        const fallbackName = role === 'patient' ? (phone || 'Patient') : (role === 'asha' ? 'ASHA Worker' : (phone || 'PHC Center'));
+        setAuth('demo-offline-token', { id: selectedPhcId || 'demo-1', name: fallbackName, role: role } as any);
+        toast.success(`Signed in offline as ${role.toUpperCase()}!`);
+        if (role === 'patient') {
+          router.push('/patient-vitals');
+        } else {
+          router.push('/dashboard');
+        }
       }
     } catch (error) {
       console.warn('Network error fallback login:', error);
