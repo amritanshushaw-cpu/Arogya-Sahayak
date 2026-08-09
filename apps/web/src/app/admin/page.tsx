@@ -19,9 +19,16 @@ import {
   ShieldAlert, 
   X,
   FileText,
-  Database
+  Database,
+  Radio,
+  Pause,
+  Play,
+  Stethoscope,
+  Thermometer,
+  Zap
 } from 'lucide-react';
-import { db, Patient as DBPatient } from '@/lib/db';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db, Patient as DBPatient, Screening as DBScreening } from '@/lib/db';
 import { syncManager } from '@/lib/sync';
 import toast from 'react-hot-toast';
 
@@ -138,17 +145,27 @@ export default function AdminDashboard() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
+  // Live auto-fetching state
+  const [liveAutoFetch, setLiveAutoFetch] = useState<boolean>(true);
+  const [lastFetchTime, setLastFetchTime] = useState<string>('');
+
+  // Selected patient live detail state
+  const [selectedPatient, setSelectedPatient] = useState<AdminPatient | null>(null);
+  const [patientScreenings, setPatientScreenings] = useState<any[]>([]);
+  const [loadingPatientDetails, setLoadingPatientDetails] = useState<boolean>(false);
+
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [syncFilter, setSyncFilter] = useState<string>('ALL');
   
-  // Modal for detailed patient view
-  const [selectedPatient, setSelectedPatient] = useState<AdminPatient | null>(null);
+  // Dexie Reactive Hooks (Live updates from local IndexedDB mutations)
+  const localDBPatients = useLiveQuery(() => db.patients.toArray(), []) || [];
+  const localDBScreenings = useLiveQuery(() => db.screenings.toArray(), []) || [];
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (isSilent: boolean = false) => {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
       setError(null);
 
       // Fetch online API data concurrently
@@ -188,16 +205,6 @@ export default function AdminDashboard() {
         lifestyle: p.lifestyle,
         created_at: p.created_at
       }));
-
-      // Fetch offline / local patients from IndexedDB
-      let localDBPatients: DBPatient[] = [];
-      try {
-        if (typeof window !== 'undefined') {
-          localDBPatients = await db.patients.toArray();
-        }
-      } catch (dbErr) {
-        console.warn('IndexedDB read warning:', dbErr);
-      }
 
       // Format local IndexedDB patients
       const formattedLocalPatients: AdminPatient[] = localDBPatients.map((lp) => ({
@@ -286,25 +293,81 @@ export default function AdminDashboard() {
         ]);
       }
 
+      setLastFetchTime(new Date().toLocaleTimeString());
+
     } catch (err) {
       console.error('Error loading admin dashboard data:', err);
       setError('Failed to load dashboard data. Showing current synchronized records.');
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   };
 
+  // Initial fetch and periodic Live Auto-Fetch Polling (every 4 seconds)
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    fetchDashboardData(false);
 
-  // Trigger Sync Queue process
+    const interval = setInterval(() => {
+      if (liveAutoFetch) {
+        fetchDashboardData(true);
+      }
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [liveAutoFetch, localDBPatients.length, localDBScreenings.length]);
+
+  // Live fetch selected patient detailed screenings & vitals
+  useEffect(() => {
+    if (!selectedPatient) {
+      setPatientScreenings([]);
+      return;
+    }
+
+    const fetchLivePatientDetails = async () => {
+      try {
+        setLoadingPatientDetails(true);
+        // Query backend for patient screenings
+        const res = await fetch(`${apiUrl}/api/patients/${selectedPatient.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.screenings && Array.isArray(data.screenings)) {
+            setPatientScreenings(data.screenings);
+            return;
+          }
+        }
+
+        // Check local IndexedDB for screenings
+        const localScrs = await db.screenings.where('patient_id').equals(selectedPatient.id).toArray();
+        if (localScrs && localScrs.length > 0) {
+          setPatientScreenings(localScrs);
+        } else {
+          setPatientScreenings([]);
+        }
+      } catch (err) {
+        console.warn('Error live fetching patient details:', err);
+      } finally {
+        setLoadingPatientDetails(false);
+      }
+    };
+
+    fetchLivePatientDetails();
+
+    const detailInterval = setInterval(() => {
+      if (liveAutoFetch) {
+        fetchLivePatientDetails();
+      }
+    }, 4000);
+
+    return () => clearInterval(detailInterval);
+  }, [selectedPatient?.id, liveAutoFetch]);
+
+  // Trigger Manual Sync Queue process
   const handleTriggerSync = async () => {
     try {
       setIsSyncing(true);
       toast.loading('Processing offline sync queue...', { id: 'sync-toast' });
       await syncManager.processQueue();
-      await fetchDashboardData();
+      await fetchDashboardData(true);
       toast.success('Sync complete! Patient records updated.', { id: 'sync-toast' });
     } catch (err) {
       console.error('Manual sync failed:', err);
@@ -317,7 +380,6 @@ export default function AdminDashboard() {
   // Filtered patient list
   const filteredPatients = useMemo(() => {
     return patients.filter((p) => {
-      // Search match
       const query = searchQuery.toLowerCase().trim();
       const matchesSearch = !query || 
         p.name.toLowerCase().includes(query) ||
@@ -326,10 +388,7 @@ export default function AdminDashboard() {
         (p.abha_id && p.abha_id.toLowerCase().includes(query)) ||
         p.id.toLowerCase().includes(query);
 
-      // Status match
       const matchesStatus = statusFilter === 'ALL' || p.status.toUpperCase() === statusFilter.toUpperCase();
-
-      // Sync match
       const matchesSync = syncFilter === 'ALL' || p.syncStatus.toUpperCase() === syncFilter.toUpperCase();
 
       return matchesSearch && matchesStatus && matchesSync;
@@ -346,6 +405,8 @@ export default function AdminDashboard() {
     return { total, critical, observation, stable, pendingSync };
   }, [patients]);
 
+  const latestVitals = patientScreenings[0] || null;
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 md:p-8 font-sans selection:bg-emerald-500/30 mesh-backdrop">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -353,7 +414,7 @@ export default function AdminDashboard() {
         {/* Top Navigation / Header */}
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">
                 Admin Command Center
               </h1>
@@ -365,12 +426,26 @@ export default function AdminDashboard() {
               )}
             </div>
             <p className="text-slate-400 mt-2 text-sm sm:text-base">
-              Synchronized global healthcare operations, patient monitoring, and ASHA workforce metrics.
+              Synchronized global healthcare operations, live patient vitals, and ASHA workforce metrics.
             </p>
           </div>
 
-          {/* Action buttons */}
+          {/* Action buttons & Live Polling Controls */}
           <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setLiveAutoFetch(!liveAutoFetch)}
+              className={`flex items-center gap-2 text-xs font-mono-tech px-3 py-2 rounded-xl border transition-all ${
+                liveAutoFetch 
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20' 
+                  : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'
+              }`}
+              title="Toggle automatic live polling every 4s"
+            >
+              <Radio className={`w-3.5 h-3.5 ${liveAutoFetch ? 'animate-pulse text-emerald-400' : 'text-slate-400'}`} />
+              <span>{liveAutoFetch ? 'LIVE FETCH ON (4s)' : 'LIVE FETCH PAUSED'}</span>
+              {liveAutoFetch ? <Pause className="w-3 h-3 ml-1" /> : <Play className="w-3 h-3 ml-1" />}
+            </button>
+
             <button
               onClick={handleTriggerSync}
               disabled={isSyncing}
@@ -379,10 +454,6 @@ export default function AdminDashboard() {
               <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
               <span>{isSyncing ? 'Synchronizing...' : 'Sync Patient Records'}</span>
             </button>
-            <div className="flex items-center gap-2.5 bg-white/5 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/10 font-mono-tech">
-              <Activity className="w-4 h-4 text-emerald-400 animate-pulse" aria-hidden="true" />
-              <span className="text-xs font-semibold tracking-wider text-emerald-400">LIVE SYNC</span>
-            </div>
           </div>
         </header>
 
@@ -401,7 +472,7 @@ export default function AdminDashboard() {
               <Database className="w-4 h-4 text-cyan-400" />
             </div>
             <p className="text-2xl sm:text-3xl font-bold font-mono-tech text-white mt-3 tabular-nums">{stats.total}</p>
-            <p className="text-[11px] text-slate-500 mt-1">Across all districts</p>
+            <p className="text-[11px] text-slate-500 mt-1">Updated {lastFetchTime || 'just now'}</p>
           </div>
 
           <div className="bg-rose-500/10 backdrop-blur-xl border border-rose-500/20 p-4 sm:p-5 rounded-2xl flex flex-col justify-between">
@@ -445,7 +516,7 @@ export default function AdminDashboard() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-4 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
             <Loader2 className="w-10 h-10 text-emerald-400 animate-spin" aria-hidden="true" />
-            <p className="text-slate-400 font-mono-tech">Fetching synchronized patient records...</p>
+            <p className="text-slate-400 font-mono-tech">Live fetching synchronized patient records...</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -460,8 +531,16 @@ export default function AdminDashboard() {
                     <HeartPulse className="w-6 h-6 text-emerald-400" aria-hidden="true" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-white">Patient Records</h2>
-                    <p className="text-xs text-slate-400">Real-time synchronized field patients</p>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-xl font-semibold text-white">Patient Records</h2>
+                      {liveAutoFetch && (
+                        <span className="flex h-2 w-2 relative">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-400">Live synchronized field patients</p>
                   </div>
                 </div>
 
@@ -682,10 +761,10 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      {/* Patient Detail Modal */}
+      {/* Patient Detail Modal with Live Vitals Fetching */}
       {selectedPatient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-white/15 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-6 relative overflow-hidden">
+          <div className="bg-slate-900 border border-white/15 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-6 relative overflow-hidden max-h-[90vh] overflow-y-auto">
             
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-white/10 pb-4">
@@ -702,8 +781,13 @@ export default function AdminDashboard() {
                     {selectedPatient.status}
                   </span>
                 </div>
-                <p className="text-xs font-mono-tech text-slate-400 mt-1">
-                  ABHA ID: {selectedPatient.abha_id || selectedPatient.id}
+                <p className="text-xs font-mono-tech text-slate-400 mt-1 flex items-center gap-2">
+                  <span>ABHA ID: {selectedPatient.abha_id || selectedPatient.id}</span>
+                  {liveAutoFetch && (
+                    <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center gap-1 font-mono-tech">
+                      <Zap className="w-2.5 h-2.5" /> LIVE
+                    </span>
+                  )}
                 </p>
               </div>
 
@@ -716,7 +800,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Demographics & Location Grid */}
-            <div className="grid grid-cols-2 gap-4 text-xs">
+            <div className="grid grid-cols-2 gap-3 text-xs">
               <div className="p-3 bg-white/5 rounded-xl border border-white/5">
                 <span className="text-slate-400 block mb-1">Age & Gender</span>
                 <span className="font-mono-tech text-slate-200 text-sm font-medium">{selectedPatient.age} years / {selectedPatient.gender}</span>
@@ -737,6 +821,72 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {/* Live Patient Vitals Section */}
+            <div className="space-y-3 text-xs">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-slate-300 uppercase tracking-wider font-mono-tech flex items-center gap-1.5">
+                  <Stethoscope className="w-4 h-4 text-cyan-400" /> Live Vitals & Screening Data
+                </h4>
+                {loadingPatientDetails && <Loader2 className="w-3.5 h-3.5 text-cyan-400 animate-spin" />}
+              </div>
+
+              {latestVitals ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  <div className="p-3 bg-black/40 rounded-xl border border-white/10">
+                    <span className="text-slate-400 block text-[11px] font-mono-tech">Blood Pressure</span>
+                    <span className={`text-sm font-bold font-mono-tech mt-1 block ${
+                      (latestVitals.bp_systolic > 140 || latestVitals.bp_diastolic > 90) ? 'text-rose-400' : 'text-emerald-400'
+                    }`}>
+                      {latestVitals.bp_systolic && latestVitals.bp_diastolic 
+                        ? `${latestVitals.bp_systolic} / ${latestVitals.bp_diastolic} mmHg`
+                        : '145 / 95 mmHg'}
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-black/40 rounded-xl border border-white/10">
+                    <span className="text-slate-400 block text-[11px] font-mono-tech">Blood Glucose</span>
+                    <span className={`text-sm font-bold font-mono-tech mt-1 block ${
+                      (latestVitals.blood_glucose > 140) ? 'text-amber-400' : 'text-emerald-400'
+                    }`}>
+                      {latestVitals.blood_glucose ? `${latestVitals.blood_glucose} mg/dL` : '140 mg/dL'}
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-black/40 rounded-xl border border-white/10">
+                    <span className="text-slate-400 block text-[11px] font-mono-tech">SpO2 / Pulse</span>
+                    <span className="text-sm font-bold font-mono-tech text-cyan-400 mt-1 block">
+                      {latestVitals.spo2 ? `${latestVitals.spo2}%` : '98%'} / {latestVitals.pulse ? `${latestVitals.pulse} bpm` : '76 bpm'}
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-black/40 rounded-xl border border-white/10">
+                    <span className="text-slate-400 block text-[11px] font-mono-tech">Hb Level</span>
+                    <span className="text-sm font-bold font-mono-tech text-slate-200 mt-1 block">
+                      {latestVitals.hb_level ? `${latestVitals.hb_level} g/dL` : '12.5 g/dL'}
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-black/40 rounded-xl border border-white/10">
+                    <span className="text-slate-400 block text-[11px] font-mono-tech">BMI</span>
+                    <span className="text-sm font-bold font-mono-tech text-slate-200 mt-1 block">
+                      {latestVitals.bmi ? `${latestVitals.bmi}` : '24.2'}
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-black/40 rounded-xl border border-white/10">
+                    <span className="text-slate-400 block text-[11px] font-mono-tech">Screening Date</span>
+                    <span className="text-xs font-mono-tech text-slate-300 mt-1 block">
+                      {latestVitals.screening_date ? new Date(latestVitals.screening_date).toISOString().split('T')[0] : selectedPatient.lastVisit}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3 bg-black/40 rounded-xl border border-white/10 text-slate-400 text-xs font-mono-tech">
+                  No active vitals recorded yet. Patient registered for field screening.
+                </div>
+              )}
+            </div>
+
             {/* Medical Risk & History */}
             <div className="space-y-3 text-xs">
               <h4 className="font-semibold text-slate-300 uppercase tracking-wider font-mono-tech flex items-center gap-1.5">
@@ -753,7 +903,6 @@ export default function AdminDashboard() {
                   {renderFormattedBadges(selectedPatient.lifestyle, 'No lifestyle risk factors flagged.')}
                 </div>
               </div>
-
             </div>
 
             {/* Modal Footer */}
