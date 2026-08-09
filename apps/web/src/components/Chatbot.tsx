@@ -5,7 +5,7 @@ import { MessageSquare, X, Send, Bot, Mic, Volume2, VolumeX, Loader2, Globe } fr
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/lib/authStore';
 import { LANGUAGES as GLOBAL_LANGUAGES } from '@/lib/translations';
-import { bhasiniTextToSpeech } from '@/lib/bhasini';
+import { bhasiniTextToSpeech, bhasiniTranslate } from '@/lib/bhasini';
 
 type Message = {
   id: string;
@@ -266,6 +266,20 @@ export const Chatbot = () => {
     if (!overrideInput) setInput('');
     setLoading(true);
 
+    let queryForAI = textToSend;
+
+    // 1. Bhasini Vernacular Input NMT Translation to English for maximum clinical accuracy
+    if (globalLang && globalLang !== 'en-US') {
+      try {
+        const inputTrans = await bhasiniTranslate(textToSend, globalLang, 'en-US');
+        if (inputTrans.translatedText && inputTrans.provider === 'bhasini') {
+          queryForAI = inputTrans.translatedText;
+        }
+      } catch (inErr) {
+        console.warn('Bhasini NMT input translation error:', inErr);
+      }
+    }
+
     let botReplyText = '';
 
     try {
@@ -274,7 +288,7 @@ export const Chatbot = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: textToSend,
+          message: queryForAI,
           language: globalLang || 'en-US',
           history: messages.map(m => ({ role: m.sender === 'bot' ? 'assistant' : 'user', content: m.text }))
         })
@@ -291,6 +305,16 @@ export const Chatbot = () => {
     // Fallback to local clinical triage if API response was unavailable or empty
     if (!botReplyText) {
       botReplyText = generateOfflineClinicalReply(textToSend, globalLang || 'en-US');
+    } else if (globalLang && globalLang !== 'en-US') {
+      // 2. Bhasini Vernacular Output NMT Translation to Target Indian Language
+      try {
+        const outTrans = await bhasiniTranslate(botReplyText, 'en-US', globalLang);
+        if (outTrans.translatedText && outTrans.provider === 'bhasini') {
+          botReplyText = outTrans.translatedText;
+        }
+      } catch (outErr) {
+        console.warn('Bhasini NMT output translation error:', outErr);
+      }
     }
 
     const botMessageId = (Date.now() + 1).toString();
