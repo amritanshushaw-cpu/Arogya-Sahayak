@@ -209,10 +209,32 @@ export default function PatientDashboard() {
     }
     
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
-        setInfoForm({ ...infoForm, village: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}` });
-        toast.success('Location fetched successfully');
+        let placeName = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`, {
+            headers: { 'Accept-Language': 'en' }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.address) {
+              const { village, town, city, suburb, county, state_district, state } = data.address;
+              const place = village || town || city || suburb || state_district || county;
+              if (place && state) {
+                placeName = `${place}, ${state}`;
+              } else if (place) {
+                placeName = place;
+              } else if (data.display_name) {
+                placeName = data.display_name.split(',').slice(0, 2).join(',').trim();
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Reverse geocoding failed:', e);
+        }
+        setInfoForm(prev => ({ ...prev, village: placeName }));
+        toast.success(`Location acquired: ${placeName}`);
         setLocating(false);
       },
       (error) => {

@@ -14,6 +14,7 @@ export default function RegisterPage() {
   const [role, setRole] = useState('patient');
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
+  const [locationName, setLocationName] = useState<string>('');
   const [locationLoading, setLocationLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -26,11 +27,35 @@ export default function RegisterPage() {
     }
     setLocationLoading(true);
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLat(position.coords.latitude);
-        setLng(position.coords.longitude);
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        setLat(latitude);
+        setLng(longitude);
+        let placeName = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`, {
+            headers: { 'Accept-Language': 'en' }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.address) {
+              const { village, town, city, suburb, county, state_district, state } = data.address;
+              const place = village || town || city || suburb || state_district || county;
+              if (place && state) {
+                placeName = `${place}, ${state}`;
+              } else if (place) {
+                placeName = place;
+              } else if (data.display_name) {
+                placeName = data.display_name.split(',').slice(0, 2).join(',').trim();
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Reverse geocoding failed:', e);
+        }
+        setLocationName(placeName);
         setLocationLoading(false);
-        toast.success('Location acquired!');
+        toast.success(`Location acquired: ${placeName}`);
       },
       (error) => {
         console.error(error);
@@ -172,7 +197,7 @@ export default function RegisterPage() {
                 ) : (
                   <MapPin className="h-5 w-5 text-emerald-400" aria-hidden="true" />
                 )}
-                {lat && lng ? 'Location Acquired ✓' : 'Get Location'}
+                {locationName ? `📍 ${locationName} ✓` : lat && lng ? 'Location Acquired ✓' : 'Get Location'}
               </button>
             </div>
           )}
