@@ -65,7 +65,7 @@ module.exports = async function (fastify, opts) {
                 role: 'user',
                 content: `Vitals: BP ${screening.bp_systolic}/${screening.bp_diastolic}, Blood Glucose ${screening.blood_glucose}, SpO2 ${screening.spo2}%. Algorithm Risk Level: ${screening.risk_level}. Explain the risk.`
               }],
-              max_tokens: 150
+              max_tokens: 1000
             })
           });
           

@@ -31,7 +31,7 @@ If symptoms are severe, advise seeing a doctor immediately.`;
         body: JSON.stringify({
           model: 'llama-3.1-8b-instant',
           messages: messages,
-          max_tokens: max_tokens || 1024
+          max_tokens: max_tokens || 3000
         })
       });
 

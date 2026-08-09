@@ -90,10 +90,19 @@ export const Chatbot = () => {
     
     const utterance = new SpeechSynthesisUtterance(text);
     const langMap: Record<string, string> = {
-      'Hindi': 'hi-IN', 'English': 'en-IN'
+      'Hindi': 'hi-IN', 'Bengali': 'bn-IN', 'Telugu': 'te-IN', 'Marathi': 'mr-IN',
+      'Tamil': 'ta-IN', 'Gujarati': 'gu-IN', 'Kannada': 'kn-IN', 'Malayalam': 'ml-IN',
+      'English': 'en-IN', 'Urdu': 'ur-IN', 'Odia': 'or-IN', 'Punjabi': 'pa-IN', 'Assamese': 'as-IN'
     };
     utterance.lang = langMap[language] || 'hi-IN'; // Fallback to Hindi voices if available
     window.speechSynthesis.speak(utterance);
+  };
+
+  const handleClose = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsOpen(false);
   };
 
   const handleSend = async (overrideInput?: string) => {
@@ -168,7 +177,7 @@ export const Chatbot = () => {
                 </div>
               </div>
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={handleClose}
                 aria-label="Close Assistant"
                 className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500"
               >
