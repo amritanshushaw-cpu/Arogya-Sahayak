@@ -158,4 +158,4 @@ Seed accounts provided for local and demo environments:
 
 ---
 
-Made with love by HexCore
+Made with love by HexCore❤
