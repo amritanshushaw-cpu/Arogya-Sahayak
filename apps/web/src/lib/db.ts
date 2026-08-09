@@ -24,6 +24,8 @@ export interface Patient {
   // Domain‑specific optional fields (kept as‑is for backward compatibility)
   family_history?: any;
   lifestyle?: any;
+  age?: number | string;
+  gender?: string;
 }
 
 export interface Screening {
@@ -171,7 +173,9 @@ export async function routePatientToNearestPHCDatabase(
     updatedAt: patient.updatedAt || now,
     lastSyncTimestamp: patient.lastSyncTimestamp || null,
     family_history: patient.family_history || null,
-    lifestyle: patient.lifestyle || null
+    lifestyle: patient.lifestyle || null,
+    age: patient.age,
+    gender: patient.gender
   };
 
   // Save to system DB
