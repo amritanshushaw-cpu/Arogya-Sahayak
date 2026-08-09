@@ -41,6 +41,14 @@ const PORT = process.env.PORT || 3001;
 
 const start = async () => {
   try {
+    // Ensure SQLite data directory exists
+    const fs = require('fs');
+    const path = require('path');
+    const dataDir = path.join(__dirname, '../data');
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+
     // Auto-migrate database on boot
     const db = require('./db/connection');
     console.log('Running database migrations...');

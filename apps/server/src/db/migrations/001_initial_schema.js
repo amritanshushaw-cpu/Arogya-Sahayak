@@ -5,30 +5,33 @@
 exports.up = async function(knex) {
   await knex.schema.createTable('users', table => {
     table.text('id').primary();
-    table.text('role').notNullable(); // asha, anm, doctor, phc_admin, district_admin
+    table.text('role').notNullable(); // asha, anm, doctor, phc_admin, district_admin, phc
     table.text('name').notNullable();
-    table.text('phone').unique().notNullable();
+    table.text('phone');
+    table.text('email');
     table.text('language').defaultTo('hi');
     table.text('district');
     table.text('state');
-    table.text('password_hash').notNullable();
+    table.text('password_hash');
     table.timestamp('created_at').defaultTo(knex.fn.now());
   });
 
   await knex.schema.createTable('patients', table => {
     table.text('id').primary();
-    table.text('abha_id').unique().nullable();
+    table.text('abha_id').nullable();
     table.text('name').notNullable();
-    table.integer('age').notNullable();
-    table.text('gender').notNullable();
+    table.integer('age');
+    table.text('gender');
     table.text('phone');
     table.text('village');
     table.text('block');
     table.text('district');
     table.text('state');
+    table.text('assigned_phc_code');
+    table.text('assigned_phc_name');
     table.text('family_history'); // JSON string
     table.text('lifestyle'); // JSON string
-    table.text('registered_by').references('id').inTable('users');
+    table.text('registered_by');
     table.timestamp('created_at').defaultTo(knex.fn.now());
     table.timestamp('updated_at').defaultTo(knex.fn.now());
   });

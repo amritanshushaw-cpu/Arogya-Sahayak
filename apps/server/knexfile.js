@@ -2,7 +2,7 @@ require('dotenv').config();
 
 module.exports = {
   development: {
-    client: 'better-sqlite3',
+    client: 'sqlite3',
     connection: {
       filename: './data/arogya.db'
     },
@@ -13,7 +13,7 @@ module.exports = {
   },
 
   production: {
-    client: 'better-sqlite3',
+    client: 'sqlite3',
     connection: {
       filename: './data/arogya.db'
     },
