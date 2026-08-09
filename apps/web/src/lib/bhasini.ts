@@ -15,6 +15,7 @@ export interface BhasiniTTSResult {
   audioContent?: string | null;
   language: string;
   provider: string;
+  audioType?: 'wav' | 'mp3';
 }
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';

@@ -217,7 +217,7 @@ export const Chatbot = () => {
     recognition.start();
   };
 
-  // Handle Vernacular Speech Synthesis (Voice Output) with Bhasini AI & Web Speech Fallback
+  // Handle Vernacular Speech Synthesis (Voice Output) with Bhasini AI & Google TTS Proxy Fallback
   const speakText = async (text: string, msgId?: string) => {
     if (typeof window === 'undefined') return;
 
@@ -242,22 +242,25 @@ export const Chatbot = () => {
     const cleanText = text.replace(/[*#_`]/g, '').replace(/\n+/g, '. ').trim();
     const targetLangCode = currentLangObj.ttsCode || 'en-US';
 
-    // 1. Attempt Bhasini NLTM TTS Audio synthesis first for authentic Indian vernacular voice
+    // 1. Attempt server-side TTS (Bhasini Dhruva → Google Translate TTS proxy fallback)
+    // The server handles the cascade: Bhasini API → Google Translate proxy → null
     try {
       const bhasiniRes = await bhasiniTextToSpeech(cleanText, globalLang || 'bn-IN');
       if (bhasiniRes.audioContent) {
-        const audio = new Audio(`data:audio/wav;base64,${bhasiniRes.audioContent}`);
+        // Use correct MIME type based on provider: Bhasini returns wav, Google TTS proxy returns mp3
+        const mimeType = bhasiniRes.audioType === 'mp3' ? 'audio/mpeg' : 'audio/wav';
+        const audio = new Audio(`data:${mimeType};base64,${bhasiniRes.audioContent}`);
         (window as any)._bhasiniAudio = audio;
-        audio.onended = () => setActiveSpeakingId(null);
-        audio.onerror = () => setActiveSpeakingId(null);
+        audio.onended = () => { (window as any)._bhasiniAudio = null; setActiveSpeakingId(null); };
+        audio.onerror = () => { (window as any)._bhasiniAudio = null; setActiveSpeakingId(null); };
         await audio.play();
         return;
       }
     } catch (bErr) {
-      console.warn('Bhasini TTS fallback to native speech synthesis:', bErr);
+      console.warn('Server TTS unavailable, falling back to Web Speech:', bErr);
     }
 
-    // 2. Native Web Speech Synthesis fallback with proper voice loading
+    // 2. Native Web Speech Synthesis fallback (last resort — may not have Indian voices on Windows)
     if (!('speechSynthesis' in window)) {
       setActiveSpeakingId(null);
       return;
@@ -279,7 +282,6 @@ export const Chatbot = () => {
     );
 
     // If specific OS voice for target language is missing, fall back to Indian Hindi or Indian English voice
-    // to prevent default US English voice from pronouncing Indic scripts with American phonetics!
     if (!bestVoice && langPrefix !== 'en') {
       bestVoice = voices.find(v => 
         v.lang.toLowerCase().includes('hi') || 
