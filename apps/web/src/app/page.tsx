@@ -788,7 +788,14 @@ export default function HomePage() {
                   <div className={`inline-flex p-3 rounded-xl ${iconStyles[index]} mb-3`}>
                     <Icon className="w-6 h-6" aria-hidden="true" />
                   </div>
-                  <div className="text-2xl font-extrabold text-white font-mono-tech tabular-nums">{item.value}</div>
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="text-2xl font-extrabold text-white font-mono-tech tabular-nums">{item.value}</div>
+                    {index === 0 && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase tracking-wider">
+                        Beta
+                      </span>
+                    )}
+                  </div>
                   <div className="text-xs text-slate-400 mt-1 font-mono-tech">{item.detail}</div>
                 </div>
               );
