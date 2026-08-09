@@ -80,8 +80,8 @@ export class ArogyaDatabase extends Dexie {
   syncQueue!: Table<SyncQueueItem, number>;
   phc_settings!: Table<PHCSetting, string>;
 
-  constructor() {
-    super('ArogyaDatabase');
+  constructor(dbName: string = 'ArogyaDatabase') {
+    super(dbName);
     this.version(1).stores({
       // Initial schema – only core fields
       patients: 'id, name, phone, village, syncStatus',
@@ -113,4 +113,25 @@ export class ArogyaDatabase extends Dexie {
   }
 }
 
-export const db = new ArogyaDatabase();
+// Global database instance cache for multi-location PHC databases
+const phcDbInstances: Map<string, ArogyaDatabase> = new Map();
+
+/**
+ * Creates or retrieves a dedicated IndexedDB database instance for a specific PHC Location
+ * @param phcCode PHC location identifier (e.g. 'PHC_PATNA_CENTRAL', 'PHC_BETTIAH_01')
+ */
+export function getPHCDatabase(phcCode: string = 'PATNA_CENTRAL'): ArogyaDatabase {
+  const cleanCode = phcCode.toUpperCase().replace(/[^A-Z0-9]/g, '_');
+  const dbName = `ArogyaDB_${cleanCode}`;
+
+  if (!phcDbInstances.has(dbName)) {
+    console.log(`[IndexedDB Manager] Creating dedicated IndexedDB instance: "${dbName}"`);
+    const newDb = new ArogyaDatabase(dbName);
+    phcDbInstances.set(dbName, newDb);
+  }
+
+  return phcDbInstances.get(dbName)!;
+}
+
+// Default system database instance
+export const db = new ArogyaDatabase('ArogyaDatabase');

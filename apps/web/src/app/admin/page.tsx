@@ -29,7 +29,7 @@ import {
   Plus
 } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, Patient as DBPatient, Screening as DBScreening } from '@/lib/db';
+import { db, getPHCDatabase, Patient as DBPatient, Screening as DBScreening } from '@/lib/db';
 import { syncManager } from '@/lib/sync';
 import toast from 'react-hot-toast';
 
@@ -193,7 +193,10 @@ export default function AdminDashboard() {
     const code = newPhcForm.phc_code.trim() || `PHC_${newPhcForm.location.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`;
     
     try {
-      // 1. Save to local Dexie IndexedDB phc_settings
+      // 1. Instantiates and opens physical IndexedDB database for this location PHC
+      const phcDatabase = getPHCDatabase(code);
+      await phcDatabase.open();
+
       const newPhcObj = {
         id: 'PHC-' + Date.now(),
         phc_code: code,
@@ -204,12 +207,20 @@ export default function AdminDashboard() {
         officer_in_charge: newPhcForm.officer_in_charge.trim() || 'Primary Medical Officer',
         contact: newPhcForm.contact.trim() || '+91 9876543210',
         isActive: true,
-        db_partition: `db_${code.toLowerCase()}`,
+        db_partition: `ArogyaDB_${code}`,
         createdAt: new Date(),
         updatedAt: new Date()
       };
       
+      // Save settings to both global system DB and dedicated location DB
       await db.phc_settings.put(newPhcObj);
+      await phcDatabase.phc_settings.put(newPhcObj);
+
+      // Save active DB in browser storage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('active_phc_code', code);
+        localStorage.setItem('active_phc_dbname', `ArogyaDB_${code}`);
+      }
 
       // 2. Post to backend API
       try {
@@ -225,7 +236,7 @@ export default function AdminDashboard() {
         console.warn('Backend PHC setup offline fallback:', err);
       }
 
-      toast.success(`PHC Center "${newPhcForm.name}" setup successfully at ${newPhcForm.location}!`);
+      toast.success(`✓ IndexedDB "ArogyaDB_${code}" created & initialized for ${newPhcForm.name}!`);
       setActivePhcDb(code);
       setIsPhcModalOpen(false);
       setNewPhcForm({
@@ -891,10 +902,21 @@ export default function AdminDashboard() {
                           </span>
                           
                           <button
-                            onClick={() => {
+                            onClick={async () => {
                               const code = h.phc_code || `PHC_${h.name.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`;
-                              setActivePhcDb(code);
-                              toast.success(`Switched active database context to ${h.name} (${code})`);
+                              try {
+                                const targetDb = getPHCDatabase(code);
+                                await targetDb.open();
+                                if (typeof window !== 'undefined') {
+                                  localStorage.setItem('active_phc_code', code);
+                                  localStorage.setItem('active_phc_dbname', `ArogyaDB_${code}`);
+                                }
+                                setActivePhcDb(code);
+                                toast.success(`✓ Active IndexedDB switched to "ArogyaDB_${code}" for ${h.name}`);
+                              } catch (err) {
+                                console.error('Database activation error:', err);
+                                toast.error('Failed to open PHC database instance');
+                              }
                             }}
                             className={`px-2.5 py-1 rounded-lg text-[11px] font-mono-tech transition-colors ${
                               isSelected 
