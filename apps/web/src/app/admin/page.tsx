@@ -207,21 +207,25 @@ export default function AdminDashboard() {
       }));
 
       // Format local IndexedDB patients
-      const formattedLocalPatients: AdminPatient[] = localDBPatients.map((lp) => ({
-        id: lp.id,
-        name: lp.name,
-        age: (lp as any).age || 0,
-        gender: (lp as any).gender || 'Unknown',
-        phone: lp.phone || 'N/A',
-        village: lp.village || 'Unassigned',
-        status: 'Pending',
-        lastVisit: lp.updatedAt ? new Date(lp.updatedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-        syncStatus: lp.syncStatus || 'pending',
-        abha_id: lp.serverId || lp.id,
-        family_history: lp.family_history,
-        lifestyle: lp.lifestyle,
-        created_at: lp.createdAt ? new Date(lp.createdAt).toISOString() : undefined
-      }));
+      const formattedLocalPatients: AdminPatient[] = localDBPatients.map((lp) => {
+        const risk = (lp as any).risk_level || ((lp as any).status === 'Critical' ? 'RED' : (lp as any).status === 'Observation' ? 'YELLOW' : (lp as any).status === 'Stable' ? 'GREEN' : undefined);
+        return {
+          id: lp.id,
+          name: lp.name,
+          age: (lp as any).age || 0,
+          gender: (lp as any).gender || 'Unknown',
+          phone: lp.phone || 'N/A',
+          village: lp.village || 'Unassigned',
+          status: risk === 'RED' ? 'Critical' : risk === 'YELLOW' ? 'Observation' : risk === 'GREEN' ? 'Stable' : 'Pending',
+          risk_level: risk,
+          lastVisit: lp.updatedAt ? new Date(lp.updatedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          syncStatus: lp.syncStatus || 'pending',
+          abha_id: lp.serverId || lp.id,
+          family_history: lp.family_history,
+          lifestyle: lp.lifestyle,
+          created_at: lp.createdAt ? new Date(lp.createdAt).toISOString() : undefined
+        };
+      });
 
       // Merge server & local patients (avoiding duplicates by id / serverId)
       const patientMap = new Map<string, AdminPatient>();
@@ -620,20 +624,24 @@ export default function AdminDashboard() {
                           </td>
                           <td className="py-3.5 px-4">
                             <span className={`px-2.5 py-1 rounded-full text-xs font-medium border font-mono-tech inline-flex items-center gap-1 ${
-                              p.status === 'Critical' || p.risk_level === 'RED'
+                              p.risk_level === 'RED' || p.status === 'Critical'
                                 ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' 
-                                : p.status === 'Observation' || p.risk_level === 'YELLOW'
+                                : p.risk_level === 'YELLOW' || p.status === 'Observation'
                                 ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
-                                : p.status === 'Stable' || p.risk_level === 'GREEN'
+                                : p.risk_level === 'GREEN' || p.status === 'Stable'
                                 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                                : 'bg-slate-500/10 border-slate-500/30 text-slate-400'
+                                : 'bg-blue-500/10 border-blue-500/30 text-blue-400'
                             }`}>
                               <span className={`w-1.5 h-1.5 rounded-full ${
-                                p.status === 'Critical' || p.risk_level === 'RED' ? 'bg-rose-400 animate-pulse' :
-                                p.status === 'Observation' || p.risk_level === 'YELLOW' ? 'bg-amber-400' :
-                                p.status === 'Stable' || p.risk_level === 'GREEN' ? 'bg-emerald-400' : 'bg-slate-400'
+                                p.risk_level === 'RED' || p.status === 'Critical' ? 'bg-rose-400 animate-pulse' :
+                                p.risk_level === 'YELLOW' || p.status === 'Observation' ? 'bg-amber-400' :
+                                p.risk_level === 'GREEN' || p.status === 'Stable' ? 'bg-emerald-400' : 'bg-blue-400'
                               }`} />
-                              {p.status}
+                              {
+                                p.risk_level === 'RED' || p.status === 'Critical' ? 'HIGH RISK (RED)' :
+                                p.risk_level === 'YELLOW' || p.status === 'Observation' ? 'MODERATE RISK (YELLOW)' :
+                                p.risk_level === 'GREEN' || p.status === 'Stable' ? 'LOW RISK (GREEN)' : 'PENDING SCREENING'
+                              }
                             </span>
                           </td>
                           <td className="py-3.5 px-4 font-mono-tech text-xs">
@@ -761,13 +769,19 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-2">
                   <h3 className="text-2xl font-bold text-white">{selectedPatient.name}</h3>
                   <span className={`px-2.5 py-0.5 rounded-full text-xs font-mono-tech font-medium border ${
-                    selectedPatient.status === 'Critical' || selectedPatient.risk_level === 'RED'
+                    selectedPatient.risk_level === 'RED' || selectedPatient.status === 'Critical'
                       ? 'bg-rose-500/20 border-rose-500/40 text-rose-300'
-                      : selectedPatient.status === 'Observation' || selectedPatient.risk_level === 'YELLOW'
+                      : selectedPatient.risk_level === 'YELLOW' || selectedPatient.status === 'Observation'
                       ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
-                      : 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                      : selectedPatient.risk_level === 'GREEN' || selectedPatient.status === 'Stable'
+                      ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                      : 'bg-blue-500/20 border-blue-500/40 text-blue-300'
                   }`}>
-                    {selectedPatient.status}
+                    {
+                      selectedPatient.risk_level === 'RED' || selectedPatient.status === 'Critical' ? 'HIGH RISK (RED)' :
+                      selectedPatient.risk_level === 'YELLOW' || selectedPatient.status === 'Observation' ? 'MODERATE RISK (YELLOW)' :
+                      selectedPatient.risk_level === 'GREEN' || selectedPatient.status === 'Stable' ? 'LOW RISK (GREEN)' : 'PENDING SCREENING'
+                    }
                   </span>
                 </div>
                 <p className="text-xs font-mono-tech text-slate-400 mt-1 flex items-center gap-2">
