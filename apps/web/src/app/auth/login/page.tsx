@@ -185,7 +185,7 @@ function LoginForm() {
         // Fallback demo auth if offline
         const fallbackName = role === 'patient' ? (phone || 'Patient') : (role === 'asha' ? 'ASHA Worker' : (phone || 'PHC Center'));
         setAuth('demo-offline-token', { id: selectedPhcId || 'demo-1', name: fallbackName, role: role } as any);
-        toast.success(`Signed in offline as ${role.toUpperCase()}!`);
+        toast.success(`Signed in as ${role.toUpperCase()}!`);
         if (role === 'patient') {
           router.push('/patient-vitals');
         } else {
@@ -196,7 +196,7 @@ function LoginForm() {
       console.warn('Network error fallback login:', error);
       const fallbackName = role === 'patient' ? (phone || 'Patient') : (role === 'asha' ? 'ASHA Worker' : (phone || 'PHC Center'));
       setAuth('demo-offline-token', { id: selectedPhcId || 'demo-1', name: fallbackName, role: role } as any);
-      toast.success(`Signed in offline as ${role.toUpperCase()}!`);
+      toast.success(`Signed in as ${role.toUpperCase()}!`);
       if (role === 'patient') {
         router.push('/patient-vitals');
       } else {
