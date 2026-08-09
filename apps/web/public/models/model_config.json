@@ -1,0 +1,37 @@
+{
+  "model_name": "Arogya-Sahayak-Clinical-Classifier-v1",
+  "version": "1.0.0",
+  "features": [
+    "systolicBP",
+    "diastolicBP",
+    "bloodGlucose",
+    "hemoglobin",
+    "bmi",
+    "pulse",
+    "spO2",
+    "age"
+  ],
+  "classes": ["Low", "Medium", "High"],
+  "rules": {
+    "diabetes": {
+      "critical": 200,
+      "high": 125,
+      "elevated": 100
+    },
+    "hypertension": {
+      "sys_critical": 140,
+      "dia_critical": 90,
+      "sys_elevated": 130,
+      "dia_elevated": 85
+    },
+    "anemia": {
+      "critical": 7.0,
+      "high": 11.0,
+      "moderate": 12.0
+    },
+    "cvd": {
+      "bmi_high": 30,
+      "sys_high": 140
+    }
+  }
+}

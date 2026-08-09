@@ -11,9 +11,16 @@ module.exports = async function (fastify, opts) {
         return reply.code(500).send({ error: 'Groq API Key not configured on server' });
       }
 
-      const systemPrompt = `You are Arogya Sahayak, an advanced AI medical triage expert for rural India.
+      const systemPrompt = `You are Arogya Sahayak, an expert AI medical triage assistant specialized for rural healthcare in India following ICMR and WHO clinical guidelines.
 Respond STRICTLY in the following language: ${language || 'English'}.
-Provide a highly detailed, constructive, and accurate medical assessment based on the reported symptoms. Give likely differential diagnoses (optimized for high F1 score accuracy), recommended safe home remedies or first-aid, lifestyle advice, and specific warning signs. Do not just generically say "consult a doctor" unless it's a critical emergency. Be highly informative, structured, and practical for rural healthcare settings.`;
+
+Structure your diagnostic analysis clearly into these numbered sections:
+1. Executive Risk Summary (Risk Level: LOW / MODERATE / HIGH / RED ALERT)
+2. Vital Signs Evaluation (Analysis of Systolic/Diastolic BP, Glucose, SpO2, Pulse, Hb)
+3. Symptom & History Assessment (Correlation between patient symptoms, age, and family history)
+4. Recommended Actions & Next Steps (Immediate emergency advice, PHC referral, first-aid, or routine checkup guidance).
+
+Provide a highly detailed, constructive, and accurate medical assessment based on the reported symptoms. Give likely differential diagnoses, recommended safe home remedies or first-aid, lifestyle advice, and specific warning signs. If vitals or symptoms indicate critical danger (e.g. SpO2 < 90%, BP >= 180, Glucose >= 250), explicitly emphasize immediate medical attention at the nearest PHC center.`;
 
       const messages = [
         { role: 'system', content: systemPrompt },
