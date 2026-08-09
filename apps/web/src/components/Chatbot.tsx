@@ -164,6 +164,8 @@ export const Chatbot = () => {
   const [isListening, setIsListening] = useState(false);
   const [activeSpeakingId, setActiveSpeakingId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const ttsAbortRef = useRef<AbortController | null>(null);
+  const ttsFetchingRef = useRef<string | null>(null);
 
   const currentLangObj = LANG_MAPPING[globalLang || 'en-US'] || LANG_MAPPING['en-US'];
 
@@ -217,50 +219,70 @@ export const Chatbot = () => {
     recognition.start();
   };
 
+  // Stop all ongoing speech (audio element + Web Speech)
+  const stopAllSpeech = () => {
+    ttsAbortRef.current?.abort();
+    ttsAbortRef.current = null;
+    ttsFetchingRef.current = null;
+    window.speechSynthesis?.cancel();
+    if ((window as any)._bhasiniAudio) {
+      (window as any)._bhasiniAudio.pause();
+      (window as any)._bhasiniAudio.currentTime = 0;
+      (window as any)._bhasiniAudio = null;
+    }
+  };
+
   // Handle Vernacular Speech Synthesis (Voice Output) with Bhasini AI & Google TTS Proxy Fallback
   const speakText = async (text: string, msgId?: string) => {
     if (typeof window === 'undefined') return;
 
-    // TOGGLE FEATURE: If currently speaking this message, stop speech immediately
-    if (activeSpeakingId === msgId && (window.speechSynthesis?.speaking || (window as any)._bhasiniAudio)) {
-      window.speechSynthesis?.cancel();
-      if ((window as any)._bhasiniAudio) {
-        (window as any)._bhasiniAudio.pause();
-        (window as any)._bhasiniAudio = null;
-      }
+    // TOGGLE: If currently speaking/fetching this same message, stop and return
+    if (msgId && (activeSpeakingId === msgId || ttsFetchingRef.current === msgId)) {
+      stopAllSpeech();
       setActiveSpeakingId(null);
       return;
     }
 
-    window.speechSynthesis?.cancel();
-    if ((window as any)._bhasiniAudio) {
-      (window as any)._bhasiniAudio.pause();
-      (window as any)._bhasiniAudio = null;
+    // Cancel any previous speech before starting new one
+    stopAllSpeech();
+    if (msgId) {
+      setActiveSpeakingId(msgId);
+      ttsFetchingRef.current = msgId;
     }
-    if (msgId) setActiveSpeakingId(msgId);
 
     const cleanText = text.replace(/[*#_`]/g, '').replace(/\n+/g, '. ').trim();
     const targetLangCode = currentLangObj.ttsCode || 'en-US';
 
+    // Create AbortController for this TTS request
+    const abortController = new AbortController();
+    ttsAbortRef.current = abortController;
+
     // 1. Attempt server-side TTS (Bhasini Dhruva → Google Translate TTS proxy fallback)
-    // The server handles the cascade: Bhasini API → Google Translate proxy → null
     try {
       const bhasiniRes = await bhasiniTextToSpeech(cleanText, globalLang || 'bn-IN');
+
+      // Check if this request was cancelled while waiting for the API
+      if (abortController.signal.aborted) return;
+
       if (bhasiniRes.audioContent) {
-        // Use correct MIME type based on provider: Bhasini returns wav, Google TTS proxy returns mp3
         const mimeType = bhasiniRes.audioType === 'mp3' ? 'audio/mpeg' : 'audio/wav';
         const audio = new Audio(`data:${mimeType};base64,${bhasiniRes.audioContent}`);
         (window as any)._bhasiniAudio = audio;
+        ttsFetchingRef.current = null;
         audio.onended = () => { (window as any)._bhasiniAudio = null; setActiveSpeakingId(null); };
         audio.onerror = () => { (window as any)._bhasiniAudio = null; setActiveSpeakingId(null); };
         await audio.play();
         return;
       }
     } catch (bErr) {
+      if (abortController.signal.aborted) return;
       console.warn('Server TTS unavailable, falling back to Web Speech:', bErr);
     }
 
-    // 2. Native Web Speech Synthesis fallback (last resort — may not have Indian voices on Windows)
+    ttsFetchingRef.current = null;
+    if (abortController.signal.aborted) return;
+
+    // 2. Native Web Speech Synthesis fallback (last resort)
     if (!('speechSynthesis' in window)) {
       setActiveSpeakingId(null);
       return;
@@ -272,7 +294,6 @@ export const Chatbot = () => {
     const voices = await getWebSpeechVoices();
     const langPrefix = targetLangCode.slice(0, 2).toLowerCase();
 
-    // Find best voice match for target Indian language
     let bestVoice = voices.find(v => 
       v.lang.toLowerCase().startsWith(langPrefix) || 
       v.lang.toLowerCase().includes(langPrefix) ||
@@ -281,7 +302,6 @@ export const Chatbot = () => {
       (langPrefix === 'hi' && v.name.toLowerCase().includes('hindi'))
     );
 
-    // If specific OS voice for target language is missing, fall back to Indian Hindi or Indian English voice
     if (!bestVoice && langPrefix !== 'en') {
       bestVoice = voices.find(v => 
         v.lang.toLowerCase().includes('hi') || 
@@ -305,13 +325,7 @@ export const Chatbot = () => {
   };
 
   const handleClose = () => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
-    if (typeof window !== 'undefined' && (window as any)._bhasiniAudio) {
-      (window as any)._bhasiniAudio.pause();
-      (window as any)._bhasiniAudio = null;
-    }
+    stopAllSpeech();
     setActiveSpeakingId(null);
     setIsOpen(false);
   };
