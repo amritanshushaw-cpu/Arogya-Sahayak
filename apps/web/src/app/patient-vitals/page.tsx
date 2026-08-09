@@ -141,7 +141,37 @@ export default function PatientDashboard() {
 
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
     utterance.lang = language;
-    utterance.rate = 0.95;
+    utterance.rate = 0.92; // Slightly natural pace for clarity
+
+    // Select the best matching browser voice for the target language
+    const availableVoices = window.speechSynthesis.getVoices();
+    if (availableVoices && availableVoices.length > 0) {
+      const targetLangLower = language.toLowerCase();
+      const targetPrefix = language.split('-')[0].toLowerCase();
+      
+      // 1. Exact match (e.g. "hi-IN")
+      let bestVoice = availableVoices.find(v => v.lang.toLowerCase() === targetLangLower);
+      // 2. Prefix match (e.g. "hi" or "hi_IN")
+      if (!bestVoice) {
+        bestVoice = availableVoices.find(v => 
+          v.lang.toLowerCase().startsWith(targetPrefix) || 
+          v.lang.toLowerCase().includes(targetPrefix)
+        );
+      }
+      // 3. Name match for language (e.g., "Hindi", "Bengali", "Tamil", etc.)
+      if (!bestVoice) {
+        const langObj = LANGUAGES.find(l => l.code === language);
+        if (langObj) {
+          const pureLangName = langObj.name.split(' ')[0].toLowerCase();
+          bestVoice = availableVoices.find(v => v.name.toLowerCase().includes(pureLangName));
+        }
+      }
+
+      if (bestVoice) {
+        utterance.voice = bestVoice;
+        console.log(`[TTS Engine] Matched Voice: ${bestVoice.name} (${bestVoice.lang}) for ${language}`);
+      }
+    }
 
     utterance.onstart = () => {
       setIsSpeaking(true);

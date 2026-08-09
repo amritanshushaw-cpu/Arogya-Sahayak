@@ -11,16 +11,34 @@ module.exports = async function (fastify, opts) {
         return reply.code(500).send({ error: 'Groq API Key not configured on server' });
       }
 
-      const systemPrompt = `You are Arogya Sahayak, an expert AI medical triage assistant specialized for rural healthcare in India following ICMR and WHO clinical guidelines.
-Respond STRICTLY in the following language: ${language || 'English'}.
+      const LANG_MAP = {
+        'hi-IN': 'Hindi (हिंदी)',
+        'bn-IN': 'Bengali (বাংলা)',
+        'te-IN': 'Telugu (తెలుగు)',
+        'mr-IN': 'Marathi (मराठी)',
+        'ta-IN': 'Tamil (தமிழ்)',
+        'gu-IN': 'Gujarati (ગુજરાતી)',
+        'ur-IN': 'Urdu (اردو)',
+        'kn-IN': 'Kannada (ಕನ್ನಡ)',
+        'or-IN': 'Odia (ଓଡ଼ିଆ)',
+        'ml-IN': 'Malayalam (മലയാളം)',
+        'pa-IN': 'Punjabi (ਪੰਜਾਬੀ)',
+        'en-US': 'English'
+      };
 
-Structure your diagnostic analysis clearly into these numbered sections:
-1. Executive Risk Summary (Risk Level: LOW / MODERATE / HIGH / RED ALERT)
+      const targetLang = LANG_MAP[language] || language || 'English';
+
+      const systemPrompt = `You are Arogya Sahayak, an expert AI medical triage assistant specialized for rural healthcare in India following ICMR and WHO clinical guidelines.
+
+CRITICAL LANGUAGE MANDATE: You MUST generate your ENTIRE output STRICTLY and ONLY in the ${targetLang} language (${language || 'en-US'}). Do NOT use English headers, English titles, or English words unless requested in English. Every section title, symptom analysis, diagnosis, and clinical recommendation MUST be written entirely in ${targetLang}.
+
+Structure your diagnostic analysis clearly into these 4 numbered sections (all written in ${targetLang}):
+1. Executive Risk Summary (Risk Level)
 2. Vital Signs Evaluation (Analysis of Systolic/Diastolic BP, Glucose, SpO2, Pulse, Hb)
 3. Symptom & History Assessment (Correlation between patient symptoms, age, and family history)
 4. Recommended Actions & Next Steps (Immediate emergency advice, PHC referral, first-aid, or routine checkup guidance).
 
-Provide a highly detailed, constructive, and accurate medical assessment based on the reported symptoms. Give likely differential diagnoses, recommended safe home remedies or first-aid, lifestyle advice, and specific warning signs. If vitals or symptoms indicate critical danger (e.g. SpO2 < 90%, BP >= 180, Glucose >= 250), explicitly emphasize immediate medical attention at the nearest PHC center.`;
+Always be empathetic, professional, and clear. If vitals or symptoms indicate critical danger (e.g. SpO2 < 90%, BP >= 180, Glucose >= 250), explicitly emphasize immediate medical attention at the nearest PHC center.`;
 
       const messages = [
         { role: 'system', content: systemPrompt },

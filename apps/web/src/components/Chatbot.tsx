@@ -92,24 +92,26 @@ export const Chatbot = () => {
     };
     const langCode = langMap[language] || 'hi';
     
-    if ((window as any).currentAudio) {
-      (window as any).currentAudio.pause();
-    }
-    
-    const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${langCode}&client=tw-ob`;
-    const audio = new Audio(url);
-    
-    audio.play().catch(e => {
-      console.warn("Audio play failed, falling back to window.speechSynthesis", e);
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = langCode + '-IN';
-        window.speechSynthesis.speak(utterance);
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      
+      const cleanText = text.replace(/[*#_`]/g, '').replace(/\n+/g, '. ').trim();
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      const targetLang = langCode === 'en' ? 'en-US' : `${langCode}-IN`;
+      utterance.lang = targetLang;
+      utterance.rate = 0.92;
+
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        const prefix = langCode.toLowerCase();
+        let bestVoice = voices.find(v => v.lang.toLowerCase().startsWith(prefix) || v.lang.toLowerCase().includes(prefix));
+        if (bestVoice) {
+          utterance.voice = bestVoice;
+        }
       }
-    });
-    
-    (window as any).currentAudio = audio;
+
+      window.speechSynthesis.speak(utterance);
+    }
   };
 
   const handleClose = () => {
