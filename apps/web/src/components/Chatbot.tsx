@@ -32,25 +32,49 @@ const WELCOME_MESSAGES: Record<string, string> = {
   'en-US': 'Namaste! How can I help you today? Please ask your health or symptom questions.',
   'hi-IN': 'नमस्ते! आरोग्य सहायक में आपका स्वागत है। कृपया अपने स्वास्थ्य या लक्षणों के प्रश्न पूछें।',
   'bn-IN': 'নমস্কার! আরোগ্য সহায়কে আপনাকে স্বাগতম। আপনার যেকোনো স্বাস্থ্য বা লক্ষণের প্রশ্ন এখানে জিজ্ঞাসা করুন।',
+  'gu-IN': 'નમસ્તે! આરોગ્ય સહાયકમાં તમારું સ્વાગત છે. કૃપા કરીને તમારા આરોગ્ય અથવા લક્ષણોના પ્રશ્નો પૂછો.',
   'te-IN': 'నమస్కారం! ఆరోగ్య సహాయక్‌కి స్వాగతం. దయచేసి మీ ఆరోగ్య ప్రశ్నలను అడగండి.',
   'mr-IN': 'नमस्कार! आरोग्य सहाय्यकमध्ये आपले स्वागत आहे. कृपया तुमचे आरोग्य प्रश्न विचारा.',
   'ta-IN': 'வணக்கம்! ஆரோக்கிய உதவியாளருக்கு வரவேற்கிறோம். உங்கள் சுகாதார கேள்விகளைக் கேட்கவும்.',
-  'gu-IN': 'નમસ્તે! આરોગ્ય સહાયકમાં તમારું સ્વાગત છે. કૃપા કરીને તમારા આરોગ્ય પ્રશ્નો પૂછો.',
   'ur-IN': 'ناماستے! آروگیہ سہایک میں خوش آمدید। برائے مہربانی اپنے صحت کے سوالات پوچھیں۔',
-  'kn-IN': 'ನಮಸ್ಕಾರ! ಆರೋಗ್ಯ ಸಹಾಯಕ್‌ಗೆ స్వాಗತ. దಯವಿಟ್ಟು ನಿಮ್ಮ ಆರೋಗ್ಯ ಪ್ರಶ್ನೆಗಳನ್ನು ಕೇಳಿ.',
+  'kn-IN': 'ನಮಸ್ಕಾರ! ಆರೋಗ್ಯ ಸಹಾಯಕ್‌ಗೆ സ്വാగత. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಆರೋಗ್ಯ ಪ್ರಶ್ನೆಗಳನ್ನು ಕೇಳಿ.',
   'or-IN': 'ନମସ୍କାର! ଆରୋଗ୍ୟ ସହାୟକରେ ଆପଣଙ୍କୁ ସ୍ୱାଗତ। ଦୟାକରି ଆପଣଙ୍କ ସ୍ୱାସ୍ଥ୍ୟ ପ୍ରଶ୍ନ ପଚାରନ୍ତୁ।',
   'ml-IN': 'നമസ്കാരം! ആരോഗ്യ സഹായിയിലേക്ക് സ്വാഗതം. നിങ്ങളുടെ ആരോഗ്യ ചോദ്യങ്ങൾ ചോദിക്കുക.',
   'pa-IN': 'ਨਮਸਤੇ! ਅਰੋਗਿਆ ਸਹਾਇਕ ਵਿੱਚ ਤੁਹਾਡਾ ਸਵਾਗਤ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਸਿਹਤ ਸਵਾਲ ਪੁੱਛੋ।',
 };
 
+// Helper function to reliably fetch SpeechSynthesis voices asynchronously across browsers
+const getWebSpeechVoices = (): Promise<SpeechSynthesisVoice[]> => {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      resolve([]);
+      return;
+    }
+    const currentVoices = window.speechSynthesis.getVoices();
+    if (currentVoices && currentVoices.length > 0) {
+      resolve(currentVoices);
+      return;
+    }
+    const onVoicesChanged = () => {
+      const updatedVoices = window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = null;
+      resolve(updatedVoices || []);
+    };
+    window.speechSynthesis.onvoiceschanged = onVoicesChanged;
+    setTimeout(() => {
+      resolve(window.speechSynthesis.getVoices() || []);
+    }, 300);
+  });
+};
+
 function generateOfflineClinicalReply(userText: string, langCode: string): string {
   const query = userText.toLowerCase();
   
-  const isChestPain = query.includes('chest') || query.includes('pain') || query.includes('सीने') || query.includes('বুক') || query.includes('గుండె') || query.includes('छाती');
-  const isFever = query.includes('fever') || query.includes('temp') || query.includes('बुखार') || query.includes('জ্বর') || query.includes('జ్వరం') || query.includes('ताप');
-  const isBP = query.includes('bp') || query.includes('pressure') || query.includes('ब्लड प्रेशर') || query.includes('রক্তচাপ') || query.includes('రక్తపోటు');
-  const isSugar = query.includes('sugar') || query.includes('diabetes') || query.includes('शुगर') || query.includes('ডায়াবেটিস') || query.includes('మధుమేహం');
-  const isBreath = query.includes('breath') || query.includes('shortness') || query.includes('सांस') || query.includes('শ্বাস') || query.includes('ఊపిరి');
+  const isChestPain = query.includes('chest') || query.includes('pain') || query.includes('सीने') || query.includes('বুক') || query.includes('గుండె') || query.includes('छाती') || query.includes('છાતી');
+  const isFever = query.includes('fever') || query.includes('temp') || query.includes('बुखार') || query.includes('জ্বর') || query.includes('జ్వరం') || query.includes('તાપ') || query.includes('તાવ');
+  const isBP = query.includes('bp') || query.includes('pressure') || query.includes('ब्लड प्रेशर') || query.includes('রক্তচাপ') || query.includes('రక్తపోటు') || query.includes('પ્રેશર');
+  const isSugar = query.includes('sugar') || query.includes('diabetes') || query.includes('शुगर') || query.includes('ডায়াবেটিস') || query.includes('మధుమేహం') || query.includes('ડાયાબિટીસ');
+  const isBreath = query.includes('breath') || query.includes('shortness') || query.includes('सांस') || query.includes('শ্বাস') || query.includes('ఊపిరి') || query.includes('શ્વાસ');
 
   let riskLevel = 'LOW RISK (GREEN)';
   let riskSummary = 'Vitals & symptom indicators remain stable. Continue regular health monitoring.';
@@ -76,6 +100,19 @@ function generateOfflineClinicalReply(userText: string, langCode: string): strin
       'Ensure adequate fluid intake and avoid high-sodium/high-sugar diet.',
       'Visit nearest PHC for diagnostic CBC & glucose verification.'
     ];
+  }
+
+  if (langCode === 'gu-IN') {
+    return `[ઓફલાઇન AI ક્લિનિકલ ટ્રાયજ - આરોગ્ય સહાયક]
+
+૧. જોખમ સ્તર: ${riskLevel.includes('RED') ? '🔴 ઉચ્ચ જોખમ (લાલ ચેતવણી)' : riskLevel.includes('MODERATE') ? '🟡 મધ્યમ જોખમ (પીળું)' : '🟢 સામાન્ય જોખમ (લીલું)'}
+
+૨. આરોગ્ય મુલ્યાંકન: ${isChestPain ? 'છાતીમાં દુખાવો અથવા શ્વાસ લેવામાં તકલીફના લક્ષણો. તાત્કાલિક PHC ઇમરજન્સી તપાસ જરૂરી છે.' : isFever ? 'શરીરનું તાપમાન અને તાવ વધેલો છે.' : 'ઓન-ડિવાઇસ AI મોડેલ દ્વારા પ્રાથમિક તપાસ પૂર્ણ.'}
+
+૩. ભલામણ કરેલ પગલાં:
+${advice.map(a => '• ' + a).join('\n')}
+
+(નોંધ: ઓન-ડિવાઇસ ક્લિનિકલ એન્જિન દ્વારા જવાબ જનરેટ થયો છે.)`;
   }
 
   if (langCode === 'bn-IN') {
@@ -205,7 +242,7 @@ export const Chatbot = () => {
     const cleanText = text.replace(/[*#_`]/g, '').replace(/\n+/g, '. ').trim();
     const targetLangCode = currentLangObj.ttsCode || 'en-US';
 
-    // 1. Attempt Bhasini NLTM TTS Audio synthesis first
+    // 1. Attempt Bhasini NLTM TTS Audio synthesis first for authentic Indian vernacular voice
     try {
       const bhasiniRes = await bhasiniTextToSpeech(cleanText, globalLang || 'bn-IN');
       if (bhasiniRes.audioContent) {
@@ -220,27 +257,43 @@ export const Chatbot = () => {
       console.warn('Bhasini TTS fallback to native speech synthesis:', bErr);
     }
 
-    // 2. Native Web Speech Synthesis fallback
+    // 2. Native Web Speech Synthesis fallback with proper voice loading
     if (!('speechSynthesis' in window)) {
       setActiveSpeakingId(null);
       return;
     }
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = targetLangCode;
     utterance.rate = 0.92;
 
-    const voices = window.speechSynthesis.getVoices();
-    if (voices && voices.length > 0) {
-      const langPrefix = targetLangCode.slice(0, 2).toLowerCase();
-      let bestVoice = voices.find(v => 
-        v.lang.toLowerCase().startsWith(langPrefix) || 
-        v.lang.toLowerCase().includes(langPrefix) ||
-        (langPrefix === 'bn' && (v.name.toLowerCase().includes('bengali') || v.name.toLowerCase().includes('bangla')))
+    const voices = await getWebSpeechVoices();
+    const langPrefix = targetLangCode.slice(0, 2).toLowerCase();
+
+    // Find best voice match for target Indian language
+    let bestVoice = voices.find(v => 
+      v.lang.toLowerCase().startsWith(langPrefix) || 
+      v.lang.toLowerCase().includes(langPrefix) ||
+      (langPrefix === 'bn' && (v.name.toLowerCase().includes('bengali') || v.name.toLowerCase().includes('bangla'))) ||
+      (langPrefix === 'gu' && (v.name.toLowerCase().includes('gujarati') || v.name.toLowerCase().includes('gujarat'))) ||
+      (langPrefix === 'hi' && v.name.toLowerCase().includes('hindi'))
+    );
+
+    // If specific OS voice for target language is missing, fall back to Indian Hindi or Indian English voice
+    // to prevent default US English voice from pronouncing Indic scripts with American phonetics!
+    if (!bestVoice && langPrefix !== 'en') {
+      bestVoice = voices.find(v => 
+        v.lang.toLowerCase().includes('hi') || 
+        v.lang.toLowerCase().includes('in') ||
+        v.name.toLowerCase().includes('india') ||
+        v.name.toLowerCase().includes('hindi')
       );
-      if (bestVoice) {
-        utterance.voice = bestVoice;
-      }
+    }
+
+    if (bestVoice) {
+      utterance.voice = bestVoice;
+      utterance.lang = bestVoice.lang;
+    } else {
+      utterance.lang = targetLangCode;
     }
 
     utterance.onend = () => setActiveSpeakingId(null);
@@ -252,6 +305,10 @@ export const Chatbot = () => {
   const handleClose = () => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
+    }
+    if (typeof window !== 'undefined' && (window as any)._bhasiniAudio) {
+      (window as any)._bhasiniAudio.pause();
+      (window as any)._bhasiniAudio = null;
     }
     setActiveSpeakingId(null);
     setIsOpen(false);
