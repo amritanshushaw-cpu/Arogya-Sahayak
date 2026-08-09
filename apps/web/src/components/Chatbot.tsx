@@ -92,8 +92,18 @@ export const Chatbot = () => {
 
       const voices = window.speechSynthesis.getVoices();
       if (voices && voices.length > 0) {
-        const langPrefix = currentLangObj.ttsCode.slice(0, 2).toLowerCase();
-        let bestVoice = voices.find(v => v.lang.toLowerCase().startsWith(langPrefix) || v.lang.toLowerCase().includes(langPrefix));
+        const targetLangLower = currentLangObj.ttsCode.toLowerCase();
+        const targetPrefix = currentLangObj.ttsCode.split('-')[0].toLowerCase();
+        
+        let bestVoice = voices.find(v => v.lang.toLowerCase() === targetLangLower);
+        if (!bestVoice) {
+          bestVoice = voices.find(v => v.lang.toLowerCase().startsWith(targetPrefix) || v.lang.toLowerCase().includes(targetPrefix));
+        }
+        if (!bestVoice) {
+          const pureLangName = currentLangObj.name.split(' ')[0].toLowerCase();
+          bestVoice = voices.find(v => v.name.toLowerCase().includes(pureLangName));
+        }
+        
         if (bestVoice) {
           utterance.voice = bestVoice;
         }
@@ -120,8 +130,7 @@ export const Chatbot = () => {
     setLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-      const res = await fetch(`${apiUrl}/api/chat`, {
+      const res = await fetch(`/chat-api`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

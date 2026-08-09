@@ -590,11 +590,27 @@ const content = {
   },
 };
 
+const LOCALIZED_ROLES: Record<string, string[]> = {
+  'en': ['Patient Mode', 'ASHA Worker', 'PHC Center', 'App Admin'],
+  'hi': ['रोगी मोड', 'आशा वर्कर', 'PHC केंद्र', 'ऐप एडमिन'],
+  'bn': ['রোগী মোড', 'আশা কর্মী', 'PHC কেন্দ্র', 'অ্যাপ অ্যাডমিন'],
+  'te': ['రోగి మోడ్', 'ఆశా వర్కర్', 'PHC కేంద్రం', 'యాప్ అడ్మిన్'],
+  'mr': ['रुग्ण मोड', 'आशा वर्कर', 'PHC केंद्र', 'अॅप अॅडमिन'],
+  'ta': ['நோயாளி முறை', 'ஆஷா பணியாளர்', 'PHC மையம்', 'பயன்பாட்டு நிர்வாகி'],
+  'gu': ['દર્દી મોડ', 'આશા વર્કર', 'PHC કેન્દ્ર', 'એપ એડમિન'],
+  'ur': ['مریض موڈ', 'آشا ورکر', 'پی ایچ سی سینٹر', 'ایپ ایڈمن'],
+  'kn': ['ರೋಗಿ ಮೋಡ್', 'ಆಶಾ ಕಾರ್ಯಕರ್ತೆ', 'PHC ಕೇಂದ್ರ', 'ಆಪ್ ಅಡ್ಮಿನ್'],
+  'or': ['ରୋଗୀ ମୋଡ୍', 'ଆଶା କର୍ମୀ', 'PHC କେନ୍ଦ୍ର', 'ଆପ୍ ଆଡମିନ୍'],
+  'ml': ['രോഗി മോഡ്', 'ആശാ വർക്കർ', 'PHC കേന്ദ്രം', 'ആപ്പ് അഡ്മിൻ'],
+  'pa': ['ਮਰੀਜ਼ ਮੋਡ', 'ਆਸ਼ਾ ਵਰਕਰ', 'PHC ਕੇਂਦਰ', 'ਐਪ ਐਡਮਿਨ'],
+};
+
 export default function HomePage() {
   const { language, setLanguage } = useAuthStore();
 
   const shortLang = language.split('-')[0];
   const copy = (content as any)[shortLang] || content.en;
+  const roles = LOCALIZED_ROLES[shortLang] || LOCALIZED_ROLES['en'];
 
   useEffect(() => {
     document.documentElement.lang = language || 'en';
@@ -615,9 +631,6 @@ export default function HomePage() {
             <div>
               <span className="text-xl font-bold bg-gradient-to-r from-white via-indigo-200 to-indigo-400 bg-clip-text text-transparent">
                 {copy.brandTitle}
-              </span>
-              <span className="text-xs block text-slate-400 font-sans">
-                {copy.brandSubtitle}
               </span>
             </div>
           </div>
@@ -654,10 +667,7 @@ export default function HomePage() {
           </div>
 
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white mb-6 leading-tight">
-            {copy.heroTitleLine1} <br />
-            <span className="text-3xl sm:text-5xl font-semibold bg-gradient-to-r from-indigo-400 via-violet-300 to-emerald-400 bg-clip-text text-transparent font-sans">
-              {copy.heroTitleLine2}
-            </span>
+            {copy.heroTitleLine1}
           </h1>
 
           <p className="text-xl sm:text-2xl font-medium text-indigo-200/90 mb-4">
@@ -676,7 +686,7 @@ export default function HomePage() {
               <div className="w-14 h-14 rounded-full bg-indigo-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
                 <Users className="w-7 h-7 text-indigo-400" aria-hidden="true" />
               </div>
-              <span className="font-semibold text-lg text-white">Patient Mode</span>
+              <span className="font-semibold text-lg text-white">{roles[0]}</span>
             </Link>
 
             <Link
@@ -686,7 +696,7 @@ export default function HomePage() {
               <div className="w-14 h-14 rounded-full bg-emerald-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
                 <HeartPulse className="w-7 h-7 text-emerald-400" aria-hidden="true" />
               </div>
-              <span className="font-semibold text-lg text-white">ASHA Worker</span>
+              <span className="font-semibold text-lg text-white">{roles[1]}</span>
             </Link>
 
             <Link
@@ -696,7 +706,7 @@ export default function HomePage() {
               <div className="w-14 h-14 rounded-full bg-amber-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
                 <Hospital className="w-7 h-7 text-amber-400" aria-hidden="true" />
               </div>
-              <span className="font-semibold text-lg text-white">PHC Center</span>
+              <span className="font-semibold text-lg text-white">{roles[2]}</span>
             </Link>
 
             <Link
@@ -706,7 +716,7 @@ export default function HomePage() {
               <div className="w-14 h-14 rounded-full bg-rose-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
                 <ShieldCheck className="w-7 h-7 text-rose-400" aria-hidden="true" />
               </div>
-              <span className="font-semibold text-lg text-white">App Admin</span>
+              <span className="font-semibold text-lg text-white">{roles[3]}</span>
             </Link>
           </div>
         </section>
