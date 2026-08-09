@@ -93,6 +93,7 @@ export default function RegisterPage() {
             >
               <option value="patient" className="bg-slate-900">Patient</option>
               <option value="asha" className="bg-slate-900">ASHA Worker</option>
+              <option value="doctor" className="bg-slate-900">Doctor</option>
               <option value="phc" className="bg-slate-900">PHC Center</option>
             </select>
           </div>
@@ -109,7 +110,15 @@ export default function RegisterPage() {
                 onChange={(e) => setName(e.target.value)}
                 required
                 className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
-                placeholder="Dr. John Doe"
+                placeholder={
+                  role === 'doctor' 
+                    ? 'Dr. John Doe' 
+                    : role === 'asha' 
+                    ? 'Priya Devi' 
+                    : role === 'phc' 
+                    ? 'Patna PHC Center' 
+                    : 'Ramesh Kumar'
+                }
               />
             </div>
           </div>
