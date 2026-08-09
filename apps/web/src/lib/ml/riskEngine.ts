@@ -1,13 +1,13 @@
 export interface VitalsData {
   systolicBP?: number;
   diastolicBP?: number;
-  pulse?: number;
-  spO2?: number;
   bloodGlucose?: number;
+  spO2?: number;
   hemoglobin?: number;
   height?: number; // cm
   weight?: number; // kg
   age?: number;
+  pulse?: number;
 }
 
 export interface RiskScores {
@@ -34,7 +34,16 @@ async function initONNXSession() {
   if (onnxSession) return onnxSession;
 
   try {
-    const ort = await import('onnxruntime-web');
+    if (!(window as any).ort) {
+      await new Promise<void>((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js';
+        script.onload = () => resolve();
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+    const ort = (window as any).ort;
     onnxSession = await ort.InferenceSession.create('/models/risk_model.onnx');
     console.log('[ML Inference] ONNX Risk Model loaded successfully.');
     return onnxSession;
@@ -62,7 +71,7 @@ export async function calculateRisks(vitals: VitalsData): Promise<ClinicalAssess
   try {
     const session = await initONNXSession();
     if (session) {
-      const ort = await import('onnxruntime-web');
+      const ort = (window as any).ort;
       const inputVector = new Float32Array([
         vitals.systolicBP || 120,
         vitals.diastolicBP || 80,

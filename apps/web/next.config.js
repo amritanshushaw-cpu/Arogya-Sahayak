@@ -16,5 +16,15 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '',
   },
+  webpack: (config, { isServer }) => {
+    config.resolve.fallback = { fs: false, path: false, crypto: false };
+    if (isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'onnxruntime-web': false,
+      };
+    }
+    return config;
+  },
 };
 module.exports = nextConfig;
