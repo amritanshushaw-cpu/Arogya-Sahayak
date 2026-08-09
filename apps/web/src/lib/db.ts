@@ -58,11 +58,27 @@ export interface SyncQueueItem {
   errorMsg?: string;
 }
 
+export interface PHCSetting {
+  id: string;
+  phc_code: string;
+  name: string;
+  location: string;
+  district?: string;
+  capacity: number;
+  officer_in_charge?: string;
+  contact?: string;
+  isActive: boolean;
+  db_partition: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export class ArogyaDatabase extends Dexie {
   patients!: Table<Patient, string>;
   alerts!: Table<Alert, string>;
   screenings!: Table<Screening, string>;
   syncQueue!: Table<SyncQueueItem, number>;
+  phc_settings!: Table<PHCSetting, string>;
 
   constructor() {
     super('ArogyaDatabase');
@@ -84,6 +100,15 @@ export class ArogyaDatabase extends Dexie {
       screenings: 'id, patient_id, serverId, deviceId, syncStatus, createdAt, updatedAt, lastSyncTimestamp',
       alerts: 'id, patient_id, screening_id, serverId, deviceId, syncStatus, createdAt, updatedAt, lastSyncTimestamp',
       syncQueue: 'id++, action, status, failed'
+    });
+
+    // Version 4 – add phc_settings table for distinct multi-location PHC center databases
+    this.version(4).stores({
+      patients: 'id, serverId, deviceId, syncStatus, createdAt, updatedAt, lastSyncTimestamp',
+      screenings: 'id, patient_id, serverId, deviceId, syncStatus, createdAt, updatedAt, lastSyncTimestamp',
+      alerts: 'id, patient_id, screening_id, serverId, deviceId, syncStatus, createdAt, updatedAt, lastSyncTimestamp',
+      syncQueue: 'id++, action, status, failed',
+      phc_settings: 'id, phc_code, name, location, isActive, db_partition'
     });
   }
 }

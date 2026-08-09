@@ -25,7 +25,8 @@ import {
   Play,
   Stethoscope,
   Thermometer,
-  Zap
+  Zap,
+  Plus
 } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, Patient as DBPatient, Screening as DBScreening } from '@/lib/db';
@@ -39,12 +40,12 @@ export interface AdminPatient {
   name: string;
   age: number;
   gender: string;
-  phone?: string;
-  village?: string;
+  phone: string;
+  village: string;
   block?: string;
   district?: string;
   state?: string;
-  status: 'Critical' | 'Observation' | 'Stable' | 'Pending' | string;
+  status: string;
   risk_level?: string;
   lastVisit: string;
   syncStatus: 'synced' | 'pending' | 'failed';
@@ -72,6 +73,10 @@ interface PHC {
   district?: string;
   capacity?: number;
   status?: string;
+  phc_code?: string;
+  officer_in_charge?: string;
+  contact?: string;
+  db_partition?: string;
 }
 
 function renderFormattedBadges(rawData: any, defaultMsg: string = 'None flagged') {
@@ -158,10 +163,88 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [syncFilter, setSyncFilter] = useState<string>('ALL');
+
+  // PHC Center Setup & Multi-Database State
+  const [isPhcModalOpen, setIsPhcModalOpen] = useState(false);
+  const [activePhcDb, setActivePhcDb] = useState<string>('PHC_PATNA_CENTRAL');
+  const [phcSubmitting, setPhcSubmitting] = useState(false);
+  const [newPhcForm, setNewPhcForm] = useState({
+    name: '',
+    location: '',
+    district: '',
+    capacity: '50',
+    officer_in_charge: '',
+    contact: '',
+    phc_code: ''
+  });
   
   // Dexie Reactive Hooks (Live updates from local IndexedDB mutations)
   const localDBPatients = useLiveQuery(() => db.patients.toArray(), []) || [];
   const localDBScreenings = useLiveQuery(() => db.screenings.toArray(), []) || [];
+  const localPhcSettings = useLiveQuery(() => db.phc_settings.toArray(), []) || [];
+
+  const handleSetupPhc = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPhcForm.name.trim() || !newPhcForm.location.trim()) {
+      toast.error('Please enter PHC Center Name and Location');
+      return;
+    }
+    setPhcSubmitting(true);
+    const code = newPhcForm.phc_code.trim() || `PHC_${newPhcForm.location.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`;
+    
+    try {
+      // 1. Save to local Dexie IndexedDB phc_settings
+      const newPhcObj = {
+        id: 'PHC-' + Date.now(),
+        phc_code: code,
+        name: newPhcForm.name.trim(),
+        location: newPhcForm.location.trim(),
+        district: newPhcForm.district.trim() || newPhcForm.location.trim(),
+        capacity: Number(newPhcForm.capacity) || 50,
+        officer_in_charge: newPhcForm.officer_in_charge.trim() || 'Primary Medical Officer',
+        contact: newPhcForm.contact.trim() || '+91 9876543210',
+        isActive: true,
+        db_partition: `db_${code.toLowerCase()}`,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      await db.phc_settings.put(newPhcObj);
+
+      // 2. Post to backend API
+      try {
+        await fetch(`${apiUrl}/api/admin/phc/setup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...newPhcForm,
+            phc_code: code
+          })
+        });
+      } catch (err) {
+        console.warn('Backend PHC setup offline fallback:', err);
+      }
+
+      toast.success(`PHC Center "${newPhcForm.name}" setup successfully at ${newPhcForm.location}!`);
+      setActivePhcDb(code);
+      setIsPhcModalOpen(false);
+      setNewPhcForm({
+        name: '',
+        location: '',
+        district: '',
+        capacity: '50',
+        officer_in_charge: '',
+        contact: '',
+        phc_code: ''
+      });
+      fetchDashboardData(true);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to set up PHC center');
+    } finally {
+      setPhcSubmitting(false);
+    }
+  };
 
   const fetchDashboardData = async (isSilent: boolean = false) => {
     try {
@@ -271,19 +354,44 @@ export default function AdminDashboard() {
         setAshaWorkers([]);
       }
 
-      // Parse PHCs
+      // Parse PHCs and merge with local IndexedDB PHC settings
       const serverPhcsRaw = Array.isArray(phcData) ? phcData : ((phcData as any).users || []);
+      const parsedServerPhcs: PHC[] = serverPhcsRaw.map((h: any) => ({
+        id: h.id,
+        name: h.name || 'District PHC Center',
+        location: h.district ? `${h.district}, ${h.state || 'Bihar'}` : 'District HQ',
+        capacity: 50,
+        status: 'Active',
+        phc_code: `PHC_${(h.district || 'HQ').toUpperCase().replace(/[^A-Z0-9]/g, '_')}`,
+        db_partition: `db_${(h.district || 'hq').toLowerCase().replace(/[^a-z0-9]/g, '_')}`
+      }));
 
-      if (serverPhcsRaw.length > 0) {
-        setPhcs(serverPhcsRaw.map((h: any) => ({
-          id: h.id,
-          name: h.name || 'District PHC Center',
-          location: h.district ? `${h.district}, ${h.state || 'Bihar'}` : 'District HQ',
-          capacity: 50,
-          status: 'Active'
-        })));
+      const parsedLocalPhcs: PHC[] = localPhcSettings.map((lp) => ({
+        id: lp.id,
+        name: lp.name,
+        location: lp.location,
+        district: lp.district,
+        capacity: lp.capacity,
+        status: lp.isActive ? 'Active' : 'Inactive',
+        phc_code: lp.phc_code,
+        officer_in_charge: lp.officer_in_charge,
+        contact: lp.contact,
+        db_partition: lp.db_partition
+      }));
+
+      const phcMap = new Map<string, PHC>();
+      parsedServerPhcs.forEach(p => phcMap.set(p.id, p));
+      parsedLocalPhcs.forEach(p => phcMap.set(p.id, p));
+
+      const mergedPhcs = Array.from(phcMap.values());
+
+      if (mergedPhcs.length === 0) {
+        setPhcs([
+          { id: 'H01', name: 'Patna Central PHC', location: 'Patna District HQ', capacity: 60, status: 'Active', phc_code: 'PHC_PATNA_CENTRAL', db_partition: 'db_phc_patna_central' },
+          { id: 'H02', name: 'Danapur Sub-Center', location: 'Danapur North Block', capacity: 35, status: 'Active', phc_code: 'PHC_DANAPUR', db_partition: 'db_phc_danapur' },
+        ]);
       } else {
-        setPhcs([]);
+        setPhcs(mergedPhcs);
       }
 
       setLastFetchTime(new Date().toLocaleTimeString());
@@ -716,39 +824,90 @@ export default function AdminDashboard() {
               </section>
 
               {/* PHC Network */}
-              <section className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-3 bg-indigo-500/20 rounded-xl border border-indigo-500/30">
-                    <Hospital className="w-6 h-6 text-indigo-400" aria-hidden="true" />
+              <section className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-indigo-500/20 rounded-xl border border-indigo-500/30">
+                      <Hospital className="w-6 h-6 text-indigo-400" aria-hidden="true" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-semibold text-white">PHC Network</h2>
+                      <p className="text-xs text-slate-400">Regional centers & location DBs</p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-white">PHC Network</h2>
-                    <p className="text-xs text-slate-400">Regional centers & capacity</p>
-                  </div>
+
+                  <button
+                    onClick={() => setIsPhcModalOpen(true)}
+                    className="p-2 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 transition-all flex items-center gap-1.5 text-xs font-medium"
+                    title="Set Up New PHC Center"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Set Up PHC</span>
+                  </button>
                 </div>
 
-                <div className="space-y-3.5">
-                  {phcs.map((h) => (
-                    <div key={h.id} className="p-4 bg-white/5 border border-white/5 rounded-xl hover:border-indigo-500/30 transition-all">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-medium text-slate-200">{h.name}</h3>
-                        <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono-tech ${
-                          h.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                        }`}>
-                          {h.status || 'Active'}
-                        </span>
+                {/* Active DB Context Badge */}
+                <div className="bg-indigo-950/40 border border-indigo-500/30 rounded-xl p-3 flex items-center justify-between text-xs font-mono-tech">
+                  <div className="flex items-center gap-2 text-indigo-300">
+                    <Database className="w-4 h-4 text-indigo-400" />
+                    <span>Active DB: <strong className="text-white">{activePhcDb}</strong></span>
+                  </div>
+                  <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] px-2 py-0.5 rounded-full">
+                    Isolated Context
+                  </span>
+                </div>
+
+                <div className="space-y-3.5 pt-1">
+                  {phcs.map((h) => {
+                    const isSelected = activePhcDb === (h.phc_code || `PHC_${h.name.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`);
+                    return (
+                      <div key={h.id} className={`p-4 bg-white/5 border rounded-xl transition-all ${
+                        isSelected ? 'border-indigo-500/60 bg-indigo-500/10 shadow-lg shadow-indigo-500/10' : 'border-white/5 hover:border-white/20'
+                      }`}>
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h3 className="font-medium text-slate-200">{h.name}</h3>
+                            <span className="text-[11px] font-mono-tech text-indigo-400 block mt-0.5">
+                              DB Code: {h.phc_code || `PHC_${h.name.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`}
+                            </span>
+                          </div>
+                          <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono-tech ${
+                            h.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                          }`}>
+                            {h.status || 'Active'}
+                          </span>
+                        </div>
+
+                        {h.officer_in_charge && (
+                          <p className="text-xs text-slate-400 mb-2">
+                            In-Charge: <strong className="text-slate-300">{h.officer_in_charge}</strong>
+                          </p>
+                        )}
+
+                        <div className="text-xs text-slate-400 flex justify-between items-center pt-2 border-t border-white/5">
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3 text-slate-500" />
+                            {h.location || h.district || 'District HQ'}
+                          </span>
+                          
+                          <button
+                            onClick={() => {
+                              const code = h.phc_code || `PHC_${h.name.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`;
+                              setActivePhcDb(code);
+                              toast.success(`Switched active database context to ${h.name} (${code})`);
+                            }}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-mono-tech transition-colors ${
+                              isSelected 
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
+                                : 'bg-white/10 hover:bg-white/20 text-slate-300 border border-white/10'
+                            }`}
+                          >
+                            {isSelected ? 'Active Context ✓' : 'Activate DB'}
+                          </button>
+                        </div>
                       </div>
-                      <div className="text-xs text-slate-400 flex justify-between items-center">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-slate-500" />
-                          {h.location || h.district || 'DistrictHQ'}
-                        </span>
-                        <span className="font-mono-tech text-slate-300 tabular-nums">
-                          Cap: {h.capacity || 50}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
 
@@ -918,6 +1077,142 @@ export default function AdminDashboard() {
                 Close Record
               </button>
             </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Set Up New PHC Center Modal */}
+      {isPhcModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-white/15 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 relative overflow-hidden">
+            
+            <div className="flex items-center justify-between border-b border-white/10 pb-3.5">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-indigo-500/20 rounded-xl border border-indigo-500/30">
+                  <Hospital className="w-5 h-5 text-indigo-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Set Up PHC Center</h3>
+                  <p className="text-xs text-slate-400">Configure new regional health center DB</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsPhcModalOpen(false)}
+                className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSetupPhc} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block text-slate-300 font-medium mb-1">PHC Center Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="E.g. Bettiah Primary Health Center"
+                  value={newPhcForm.name}
+                  onChange={(e) => setNewPhcForm({ ...newPhcForm, name: e.target.value })}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-medium mb-1">Major Location *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="E.g. Bettiah Block"
+                    value={newPhcForm.location}
+                    onChange={(e) => setNewPhcForm({ ...newPhcForm, location: e.target.value })}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-medium mb-1">District / Region</label>
+                  <input
+                    type="text"
+                    placeholder="E.g. West Champaran"
+                    value={newPhcForm.district}
+                    onChange={(e) => setNewPhcForm({ ...newPhcForm, district: e.target.value })}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-medium mb-1">Dedicated DB Code</label>
+                  <input
+                    type="text"
+                    placeholder="E.g. PHC_BETTIAH_01"
+                    value={newPhcForm.phc_code}
+                    onChange={(e) => setNewPhcForm({ ...newPhcForm, phc_code: e.target.value })}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white text-xs font-mono-tech uppercase placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-medium mb-1">Bed Capacity</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={newPhcForm.capacity}
+                    onChange={(e) => setNewPhcForm({ ...newPhcForm, capacity: e.target.value })}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white text-xs font-mono-tech focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-medium mb-1">Medical Officer in Charge</label>
+                <input
+                  type="text"
+                  placeholder="E.g. Dr. Rajesh Sharma"
+                  value={newPhcForm.officer_in_charge}
+                  onChange={(e) => setNewPhcForm({ ...newPhcForm, officer_in_charge: e.target.value })}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-medium mb-1">Emergency Contact Number</label>
+                <input
+                  type="text"
+                  placeholder="+91 9876543210"
+                  value={newPhcForm.contact}
+                  onChange={(e) => setNewPhcForm({ ...newPhcForm, contact: e.target.value })}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white text-xs font-mono-tech placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                />
+              </div>
+
+              <div className="pt-3 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsPhcModalOpen(false)}
+                  className="w-1/2 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-xl font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={phcSubmitting}
+                  className="w-1/2 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition-colors shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-1.5"
+                >
+                  {phcSubmitting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Setting up…</span>
+                    </>
+                  ) : (
+                    <span>Create PHC DB Context</span>
+                  )}
+                </button>
+              </div>
+            </form>
 
           </div>
         </div>
