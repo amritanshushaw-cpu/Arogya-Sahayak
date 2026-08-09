@@ -376,7 +376,11 @@ export default function PatientDashboard() {
       const response = await fetch(`${apiUrl}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: prompt })
+        body: JSON.stringify({ 
+          message: prompt,
+          language: language,
+          max_tokens: 1024
+        })
       });
 
       if (response.ok) {
@@ -729,7 +733,7 @@ ${advice.length > 0 ? advice.map(a => '- ' + a).join('\n') : '- Maintain a healt
                   <p className="text-slate-400">{UI_TRANS[language]?.processing || UI_TRANS['en-US'].processing}</p>
                 </div>
               ) : (
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-6 whitespace-pre-wrap text-slate-300 leading-relaxed min-h-[250px]">
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-6 whitespace-pre-wrap text-slate-300 leading-relaxed min-h-[250px] max-h-[550px] overflow-y-auto custom-scrollbar">
                   {analysisResult}
                 </div>
               )}

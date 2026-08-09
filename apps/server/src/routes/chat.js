@@ -3,7 +3,7 @@
 module.exports = async function (fastify, opts) {
   fastify.post('/', async (request, reply) => {
     try {
-      const { message, language, history } = request.body;
+      const { message, language, history, max_tokens } = request.body;
 
       const fallbackKey = "gsk_ZKcKSEW" + "WNIxVY2UWWUW5W" + "Gdyb3FY1SNn64E5Sb" + "PXndNqlF9dBiQy";
       const apiKey = process.env.GROQ_API_KEY || process.env.ml_key || process.env.ML_KEY || fallbackKey;
@@ -12,7 +12,7 @@ module.exports = async function (fastify, opts) {
       }
 
       const systemPrompt = `You are Arogya Sahayak, a helpful AI medical triage assistant for rural India.
-Respond STRICTLY in the following language: ${language}.
+Respond STRICTLY in the following language: ${language || 'English'}.
 Always be concise, empathetic, and ask clarifying questions about symptoms.
 If symptoms are severe, advise seeing a doctor immediately.`;
 
@@ -31,7 +31,7 @@ If symptoms are severe, advise seeing a doctor immediately.`;
         body: JSON.stringify({
           model: 'llama-3.1-8b-instant',
           messages: messages,
-          max_tokens: 300
+          max_tokens: max_tokens || 1024
         })
       });
 
